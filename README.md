@@ -6,6 +6,49 @@ A comprehensive benchmarking framework for evaluating metatranscriptome analysis
 
 This project aims to systematically evaluate and compare different metatranscriptome analysis pipelines (HUMAnN3, Kraken2/Bracken, SAMSA2, RealMap, VicWlad) using carefully designed synthetic datasets with varying diversity levels.
 
+## Quick Start
+
+### Prerequisites
+
+- **Linux/Unix system** (tested on CentOS 7+)
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone git@github.com:LlorensRicoLab/pipeline-benchmarking.git
+   cd pipeline-benchmarking
+   ```
+
+2. **Set up the environment**:
+   ```bash
+   # Install Pixi if not already installed
+   curl -fsSL https://pixi.sh/install.sh | bash
+   
+   # Install project dependencies
+   pixi install
+   
+   # Activate the environment
+   pixi shell
+   ```
+
+3. **Verify installation**:
+   ```bash
+   # Check if all dependencies are available
+   R --version
+   ```
+
+## Environment Setup
+
+This project uses Pixi for environment management. The environment includes:
+
+### Core Dependencies
+- **R >= 4.4** - Statistical computing and graphics
+- **tidyverse** - Data manipulation and visualization
+- **ggpubr** - Publication-ready plots
+- **vegan** - Community ecology analysis
+- **pandoc** - Document conversion
+
 ## Project Structure
 
 ```
@@ -48,22 +91,58 @@ pipeline_benchmarking/
     └── utils/                    # SLURM utilities
 ```
 
-## Environment Setup
+## Usage
 
-This project uses Pixi for environment management. To set up the environment:
+### 1. Synthetic Data Generation
+
+Generate synthetic datasets using the original R scripts:
 
 ```bash
-pixi install
+# Activate the environment
 pixi shell
+
+# Navigate to generation directory
+cd data/synthetic/generation
+
+# Run the simulation script (generates all diversity levels)
+Rscript gen_seqkit_comms.R
 ```
 
-## Dependencies
+**Note**: The current scripts generate all diversity levels at once. Command-line argument support will be added in future versions.
 
-- R >= 4.4
-- tidyverse
-- ggpubr
-- vegan
-- pandoc
+## Development
+
+### Adding New Pipelines
+
+1. Create a new directory in `pipelines/`
+2. Add configuration files in `config/`
+3. Create execution scripts in `scripts/`
+4. Add utility functions in `utils/`
+5. Update evaluation scripts to include the new pipeline
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/new-pipeline`
+3. Make your changes and commit: `git commit -m "feat: Add new pipeline"`
+4. Push to your fork: `git push origin feature/new-pipeline`
+5. Create a pull request
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Pixi environment not found**:
+   ```bash
+   pixi install --force
+   pixi shell
+   ```
+
+### Getting Help
+
+- Check the logs in `results/logs/`
+- Review pipeline-specific documentation
+- Open an issue on GitHub with detailed error information
 
 ## License
 
@@ -73,3 +152,16 @@ MIT License - see LICENSE file for details.
 
 - Francisco Merino-Casallo (fmerino at cipf.es)
 - Verónica Llorens Rico (vllorens at cipf.es)
+
+## Citation
+
+If you use this benchmarking framework in your research, please cite:
+
+```bibtex
+@software{pipeline_benchmarking,
+  title={Pipeline Benchmarking: A Framework for Metatranscriptome Analysis},
+  author={Merino-Casallo, Francisco and Llorens Rico, Verónica},
+  year={2025},
+  url={https://github.com/LlorensRicoLab/pipeline-benchmarking}
+}
+```

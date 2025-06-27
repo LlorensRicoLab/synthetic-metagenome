@@ -2,6 +2,31 @@
 
 A comprehensive benchmarking framework for evaluating metatranscriptome analysis pipelines using synthetic datasets.
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Environment Setup](#environment-setup)
+  - [Core Dependencies](#core-dependencies)
+- [Project Structure](#project-structure)
+- [Usage](#usage)
+  - [Synthetic Data Generation](#1-synthetic-data-generation)
+  - [Testing](#2-testing)
+    - [Running Tests Manually](#running-tests-manually)
+    - [Automated Testing](#automated-testing)
+- [Development](#development)
+  - [Setting Up Development Environment](#setting-up-development-environment)
+  - [Adding New Pipelines](#adding-new-pipelines)
+  - [Contributing](#contributing)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues](#common-issues)
+  - [Getting Help](#getting-help)
+- [License](#license)
+- [Authors](#authors)
+- [Citation](#citation)
+
 ## Project Overview
 
 This project aims to systematically evaluate and compare different metatranscriptome analysis pipelines (HUMAnN3, Kraken2/Bracken, SAMSA2, RealMap, VicWlad) using carefully designed synthetic datasets with varying diversity levels.
@@ -24,10 +49,10 @@ This project aims to systematically evaluate and compare different metatranscrip
    ```bash
    # Install Pixi if not already installed
    curl -fsSL https://pixi.sh/install.sh | bash
-   
+
    # Install project dependencies
    pixi install
-   
+
    # Activate the environment
    pixi shell
    ```
@@ -110,7 +135,57 @@ Rscript gen_seqkit_comms.R
 
 **Note**: The current scripts generate all diversity levels at once. Command-line argument support will be added in future versions.
 
+### 2. Testing
+
+This project includes comprehensive testing and code quality infrastructure:
+
+#### Quick Testing
+
+```bash
+# Activate the environment
+pixi shell
+
+# Run seqkit consistency tests
+Rscript tests/test_seqkit_consistency.R
+
+# Run all code quality checks
+pre-commit run --all-files
+```
+
+#### Testing Infrastructure
+
+- **Automated Testing**: Pre-commit hooks run automatically before each commit
+- **CI/CD Pipeline**: GitHub Actions validates code quality on every push and pull request
+- **Custom Tests**: SeqKit command consistency validation ensures data generation reliability
+
+**📖 For detailed testing documentation, see [tests/README.md](tests/README.md)**
+
 ## Development
+
+### Setting Up Development Environment
+
+If you plan to contribute to this project, you'll need to set up additional development tools:
+
+```bash
+# Activate the environment
+pixi shell
+
+# Install pre-commit hooks
+pre-commit install
+
+# Make test script executable
+chmod +x tests/test_seqkit_consistency.R
+```
+
+### Code Quality and Testing
+
+This project uses comprehensive code quality tools and testing infrastructure:
+
+- **Pre-commit Hooks**: Automatic code formatting, linting, and quality checks
+- **Custom Tests**: SeqKit command consistency validation
+- **CI/CD Pipeline**: Automated testing on GitHub Actions
+
+**📖 For detailed development setup and testing documentation, see [tests/README.md](tests/README.md)**
 
 ### Adding New Pipelines
 

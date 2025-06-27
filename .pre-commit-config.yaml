@@ -1,0 +1,122 @@
+# Pre-commit configuration for pipeline_benchmarking
+# This file configures automatic checks that run before each commit
+
+repos:
+  # R-specific hooks from lorenzwalthert/precommit
+  - repo: https://github.com/lorenzwalthert/precommit
+    rev: v0.4.3
+    hooks:
+      # R code formatting
+      - id: style-files
+        args: [--style_pkg=styler, --style_fun=tidyverse_style, --cache-root=styler-perm]
+        exclude: >
+          (?x)^(
+          tests/testthat/in/.*|
+          renv/.*
+          )$
+
+      # R syntax checking
+      - id: parsable-R
+        exclude: >
+          (?x)^(
+          tests/testthat/in/.*|
+          )$
+
+      # R code linting
+      - id: lintr
+        exclude: >
+          (?x)^(
+          tests/testthat/in/.*|
+          )$
+
+      # Code quality checks
+      - id: no-browser-statement
+        exclude: >
+          (?x)^(
+          tests/testthat/in/.*|
+          )$
+
+      - id: no-debug-statement
+        exclude: >
+          (?x)^(
+          tests/testthat/in/.*|
+          )$
+
+      # Spell checking (with comprehensive exclusions)
+      - id: spell-check
+        exclude: >
+          (?x)^(
+          (.*/|)NAMESPACE|
+          (.*/|)WORDLIST|
+          (.*/|)\.Rbuildignore|
+          (.*/|)\.Renviron|
+          (.*/|)\.Rprofile|
+          (.*/|)\.gitignore|
+          (.*/|)\.pre-commit-.*|
+          (.*/|)\.travis\.yml|
+          (.*/|)appveyor\.yml|
+          (.*/|)renv/settings\.dcf|
+          (.*/|)renv\.lock|
+          (.*/|)pixi\.lock|
+          (.*/|)pyproject\.toml|
+          (.*/|)\.gitattributes|
+          (.*/|)\.gitignore|
+          (.*/|)\.dvcignore|
+          .*\.RData|
+          .*\.Rds|
+          .*\.Rproj|
+          .*\.[rR]|
+          .*\.feather|
+          .*\.jpeg|
+          .*\.pdf|
+          .*\.png|
+          .*\.py|
+          .*\.rds|
+          .*\.sh|
+          .*\.yml|
+          .*\.yaml|
+          LICENSE|
+          \.github/workflows/.*|
+          data/.*|
+          inst/hooks/.*|
+          inst/pre-commit-.*|
+          inst/usethis-legacy-hook|
+          renv/.*|
+          revdep/.*|
+          tests/testthat/in/.*|
+          )$
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # File formatting and structure
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+        exclude: '\.Rd' # sometimes roxygen fails to generate EOF blank line.
+      - id: check-toml
+      - id: check-yaml
+      # File size checks (Prevents large files from being committed)
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      # Merge conflict checks (Prevents merge conflicts from being committed)
+      - id: check-merge-conflict
+      # Case conflict checks (Prevents commiting files that differ only by letter case)
+      - id: check-case-conflict
+
+  # Local custom hooks
+  - repo: local
+    hooks:
+      # Custom R script tests for seqkit command consistency
+      - id: test-seqkit-consistency
+        name: Test SeqKit Command Consistency
+        entry: Rscript tests/test_seqkit_consistency.R
+        language: system
+        files: |
+          data/synthetic/generation/syn_output/seqkit_comms_.*\.txt
+          data/synthetic/generation/simulating_datasets_diverse\.R
+        pass_filenames: false
+        always_run: true
+
+# Hook execution order
+fail_fast: false

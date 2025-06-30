@@ -4,7 +4,7 @@
 repos:
   # R-specific hooks from lorenzwalthert/precommit
   - repo: https://github.com/lorenzwalthert/precommit
-    rev: v0.4.3
+    rev: v0.4.3.9011
     hooks:
       # R code formatting
       - id: style-files

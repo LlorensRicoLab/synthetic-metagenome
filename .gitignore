@@ -1,4 +1,16 @@
-
 # pixi environments
 .pixi
 *.egg-info
+
+# Environment configuration (contains absolute paths)
+.env
+
+# Academic thesis
+transcriptomic_pipeline_benchmarking_thesis.pdf
+
+# IDE and editor directories
+.cursor/
+.vscode/
+
+# SLURM job logs
+slurm/logs/

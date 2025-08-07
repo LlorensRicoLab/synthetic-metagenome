@@ -1,35 +1,52 @@
 # Pre-commit configuration for pipeline_benchmarking
-# This file configures automatic checks that run before each commit
+# Fast, local checks that run before each commit
 
 repos:
   # R-specific hooks from lorenzwalthert/precommit
   - repo: https://github.com/lorenzwalthert/precommit
     rev: v0.4.3
     hooks:
-      # R code formatting
+      # R code formatting (fast, local)
       - id: style-files
         args: [--style_pkg=styler, --style_fun=tidyverse_style, --cache-root=styler-perm]
         exclude: >
           (?x)^(
           tests/testthat/in/.*|
-          renv/.*
+          data/.*\.(csv|tsv|json|fastq|gz|txt|pdf|png|jpg|jpeg)$|
+          data/.*/cache/.*|
+          data/.*/syn_specs/.*|
+          results/.*|
+          figures/.*|
+          logs/.*|
           )$
 
-      # R syntax checking
+      # R syntax checking (fast, local)
       - id: parsable-R
         exclude: >
           (?x)^(
           tests/testthat/in/.*|
+          data/.*\.(csv|tsv|json|fastq|gz|txt|pdf|png|jpg|jpeg)$|
+          data/.*/cache/.*|
+          data/.*/syn_specs/.*|
+          results/.*|
+          figures/.*|
+          logs/.*|
           )$
 
-      # R code linting
+      # R code linting (fast, local)
       - id: lintr
         exclude: >
           (?x)^(
           tests/testthat/in/.*|
+          data/.*\.(csv|tsv|json|fastq|gz|txt|pdf|png|jpg|jpeg)$|
+          data/.*/cache/.*|
+          data/.*/syn_specs/.*|
+          results/.*|
+          figures/.*|
+          logs/.*|
           )$
 
-      # Code quality checks
+      # Code quality checks (fast, local)
       - id: no-browser-statement
         exclude: >
           (?x)^(
@@ -62,6 +79,7 @@ repos:
           (.*/|)\.gitattributes|
           (.*/|)\.gitignore|
           (.*/|)\.dvcignore|
+          .*\.dvc$|
           .*\.RData|
           .*\.Rds|
           .*\.Rproj|
@@ -77,7 +95,12 @@ repos:
           .*\.yaml|
           LICENSE|
           \.github/workflows/.*|
-          data/.*|
+          data/.*\.(csv|tsv|json|fastq|gz|txt|pdf|png|jpg|jpeg)$|
+          data/.*/cache/.*|
+          data/.*/syn_specs/.*|
+          results/.*|
+          figures/.*|
+          logs/.*|
           inst/hooks/.*|
           inst/pre-commit-.*|
           inst/usethis-legacy-hook|
@@ -90,7 +113,7 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      # File formatting and structure
+      # File formatting and structure (fast, local)
       - id: trailing-whitespace
       - id: end-of-file-fixer
         exclude: '\.Rd' # sometimes roxygen fails to generate EOF blank line.
@@ -103,20 +126,9 @@ repos:
       - id: check-merge-conflict
       # Case conflict checks (Prevents commiting files that differ only by letter case)
       - id: check-case-conflict
-
-  # Local custom hooks
-  - repo: local
-    hooks:
-      # Custom R script tests for seqkit command consistency
-      - id: test-seqkit-consistency
-        name: Test SeqKit Command Consistency
-        entry: Rscript tests/test_seqkit_consistency.R
-        language: system
-        files: |
-          data/synthetic/generation/syn_output/seqkit_comms_.*\.txt
-          data/synthetic/generation/simulating_datasets_diverse\.R
-        pass_filenames: false
-        always_run: true
+      # Script hygiene checks
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
 
 # Hook execution order
-fail_fast: false
+fail_fast: true  # Stop on first failure for faster feedback

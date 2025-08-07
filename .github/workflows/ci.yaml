@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Fast pre-commit checks (same as local, but on CI)
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Pixi
+      uses: prefix-dev/setup-pixi@v0.8.0
+
+    - name: Install dependencies
+      run: pixi install
+
+    - name: Run pre-commit checks
+      run: pixi shell -- pre-commit run --all-files
+
+  # Fast testing and validation
+  test-and-validate:
+    runs-on: ubuntu-latest
+    needs: pre-commit
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Pixi
+      uses: prefix-dev/setup-pixi@v0.8.0
+
+    - name: Install dependencies
+      run: pixi install
+
+    - name: Validate project structure
+      run: |
+        # Check for required files
+        test -f README.md && echo "PASS: README.md exists"
+        test -f pyproject.toml && echo "PASS: pyproject.toml exists"
+        test -f .pre-commit-config.yaml && echo "PASS: pre-commit config exists"
+
+        # Check for required directories
+        test -d scripts && echo "PASS: scripts/ directory exists"
+        test -d tests && echo "PASS: tests/ directory exists"
+        test -d data && echo "PASS: data/ directory exists"
+
+    - name: Generate synthetic data (fast mode)
+      run: |
+        cd data/synthetic/generation
+        # Run with --no-plots for faster execution (~5s vs 46s)
+        pixi run Rscript gen_syn_specs.R --no-plots --output-dir test_output_ci
+
+    - name: Check generated data structure
+      run: |
+        # Verify the data generation worked
+        if [ -d "data/synthetic/generation/test_output_ci" ]; then
+          echo "PASS: Data generation validation passed"
+          ls -la data/synthetic/generation/test_output_ci/
+        else
+          echo "FAIL: Data generation validation failed"
+          exit 1
+        fi
+
+    - name: Clean up test data
+      run: rm -rf data/synthetic/generation/test_output_ci

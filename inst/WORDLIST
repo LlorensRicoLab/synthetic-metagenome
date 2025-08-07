@@ -4,7 +4,9 @@ Benchmarking
 Casallo
 CentOS
 codebase
+dvc
 ggpubr
+HPC
 HUMAnN
 Jesús
 Kraken
@@ -20,14 +22,17 @@ Palau
 pandoc
 parsable
 Pixi
+pixi
 pre
 Pre
 precommit
+pyproject
 README
 RealMap
 renv
 Renviron
 Reproducibility
+reproducibility
 Rprofile
 SAMSA
 seqkit

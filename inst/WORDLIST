@@ -5,6 +5,7 @@ Casallo
 CentOS
 codebase
 dvc
+EOF
 ggpubr
 HPC
 HUMAnN
@@ -26,6 +27,7 @@ pixi
 pre
 Pre
 precommit
+PRs
 pyproject
 README
 RealMap

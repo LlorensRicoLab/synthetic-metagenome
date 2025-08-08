@@ -1,13 +1,17 @@
 Arnau
+BAM
 benchmarking
 Benchmarking
 Casallo
 CentOS
+CLI
 codebase
 dna
 DVC
 env
+FASTA
 FASTQ
+fastq
 ggpubr
 gzip
 GZipped
@@ -37,6 +41,7 @@ Renviron
 Reproducibility
 Rprofile
 SAMSA
+schemas
 seqkit
 SeqKit
 styler

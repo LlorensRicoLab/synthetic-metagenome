@@ -68,5 +68,10 @@ jobs:
           exit 1
         fi
 
+    - name: Validate generated SeqKit subsampling specifications
+      run: |
+        # Test that the generated SeqKit subsampling specifications are valid
+        pixi run Rscript tests/test_seqkit_subsampling_specs.R
+
     - name: Clean up test data
       run: rm -rf data/synthetic/generation/test_output_ci

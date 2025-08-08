@@ -2,7 +2,7 @@
 
 This project includes a comprehensive data validation framework that ensures data integrity at multiple levels:
 
-**:wrench: For testing infrastructure and setup, see [`tests/README.md`](../tests/README.md)**
+**:wrench: For testing infrastructure and setup, see [`docs/TESTING.md`](TESTING.md)**
 
 1. **:clipboard: SeqKit Subsampling Specifications**:
 Validates SeqKit subsampling specification files (runs in CI)

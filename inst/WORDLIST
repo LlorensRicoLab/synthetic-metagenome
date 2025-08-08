@@ -14,12 +14,14 @@ EOF
 FASTA
 FASTQ
 fastq
+furrr
 ggpubr
 gzip
 GZipped
 HPC
 HUMAnN
 Jesús
+jsonlite
 Kraken
 linter
 linters
@@ -29,6 +31,7 @@ Llorens
 lorenzwalthert
 López
 metatranscriptome
+optparse
 Palau
 pandoc
 parsable
@@ -50,7 +53,11 @@ SAMSA
 schemas
 seqkit
 SeqKit
+SLURM
+SRA
+stringr
 styler
+subsampled
 testthat
 tidyverse
 toml

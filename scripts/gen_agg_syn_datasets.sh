@@ -51,10 +51,10 @@ check_single_combination() {
     local diversity_id="$2"
     local sampling_depth="$3"
     local strand_id="$4"
-    
+
     local aggregated_dir="$DATASETS_DIR/${diversity_level}_diversity/aggregated"
     local output_file="${aggregated_dir}/${diversity_level}_${diversity_id}_${sampling_depth}_${strand_id}.fastq.gz"
-    
+
     # Check if file is missing or corrupted
     if [ ! -f "$output_file" ] || ! check_gzip_file "$output_file"; then
         echo "${diversity_level}_${diversity_id}_${sampling_depth}_${strand_id}"
@@ -68,11 +68,11 @@ check_diversity_strand_combinations() {
     local diversity_id="$2"
     local strand_id="$3"
     local log_file="$4"
-    
+
     local job_start_time=$(date +%s)
-    
+
     local missing_combinations=()
-    
+
     # Check all 4 sampling depths
     # for this diversity_level + diversity_id + strand
     for sampling_depth in "${SAMPLING_DEPTHS[@]}"; do
@@ -85,20 +85,20 @@ check_diversity_strand_combinations() {
             missing_combinations+=("$result")
         fi
     done
-    
+
     # Output missing combinations to log file
     for combination in "${missing_combinations[@]}"; do
         echo "$combination" >> "$log_file"
     done
-    
+
     local job_elapsed=$(( $(date +%s) - job_start_time ))
-    
+
     # Determine strand name
     local strand_name="forward strand"
     if [ "$strand_id" = "2" ]; then
         strand_name="reverse strand"
     fi
-    
+
     echo -n "[$(date '+%H:%M:%S')]   Looking for aggregated datasets for "
     echo -n "${diversity_level}_${diversity_id} ${strand_name}: "
     echo "${#missing_combinations[@]} missing (${job_elapsed}s)"
@@ -111,27 +111,27 @@ regenerate_aggregated_dataset() {
     local diversity_id="$2"
     local sampling_depth="$3"
     local strand_id="$4"
-    
+
     local individual_dir="$DATASETS_DIR/${diversity_level}_diversity/individual"
     local aggregated_dir="$DATASETS_DIR/${diversity_level}_diversity/aggregated"
     local output_file="${aggregated_dir}/${diversity_level}_${diversity_id}_${sampling_depth}_${strand_id}.fastq.gz"
-    
+
     # Create aggregated directory if it doesn't exist
     mkdir -p "$aggregated_dir"
-    
+
     # Find all individual files for this combination
     local pattern="*_${diversity_level}_${diversity_id}_${sampling_depth}_${strand_id}.fastq.gz"
     local individual_files=()
-    
+
     while IFS= read -r -d '' file; do
         individual_files+=("$file")
     done < <(find "$individual_dir" -name "$pattern" -print0)
-    
+
     if [ ${#individual_files[@]} -eq 0 ]; then
         echo "  ✗ No individual files found for pattern: $pattern"
         return 1
     fi
-    
+
     # Check which files are valid
     local valid_files=()
     for file in "${individual_files[@]}"; do
@@ -141,15 +141,15 @@ regenerate_aggregated_dataset() {
             echo "  Warning: Corrupted file: $file"
         fi
     done
-    
+
     if [ ${#valid_files[@]} -eq 0 ]; then
         echo "  ✗ No valid individual files found"
         return 1
     fi
-    
+
     # Combine individual files into aggregated dataset
     cat "${valid_files[@]}" > "$output_file"
-    
+
     # Verify the generated file
     if check_gzip_file "$output_file"; then
         echo "  ✓ Successfully aggregated ${#valid_files[@]} files in: $output_file"
@@ -167,14 +167,14 @@ process_diversity_strand_simulation() {
     local diversity_id="$2"
     local strand_id="$3"
     local log_file="$4"
-    
+
     local job_start_time=$(date +%s)
-    
+
     local success_count=0
     local failure_count=0
     local total_files=0
     local file_counts=()
-    
+
     # Process all 4 sampling depths
     # for this diversity_level + diversity_id + strand
     for sampling_depth in "${SAMPLING_DEPTHS[@]}"; do
@@ -185,7 +185,7 @@ process_diversity_strand_simulation() {
                 "$sampling_depth" "$strand_id" 2>&1
         )
         local exit_code=$?
-        
+
         # Extract file count from success message
         if echo "$output" | grep -q "Successfully aggregated"; then
             file_count=$(echo "$output" | grep "Successfully aggregated" | \
@@ -199,26 +199,26 @@ process_diversity_strand_simulation() {
         else
             file_counts+=("0")
         fi
-        
+
         # Output to log file
         echo "$output" >> "$log_file"
-        
+
         if [ $exit_code -eq 0 ]; then
             success_count=$(( success_count + 1 ))
         else
             failure_count=$(( failure_count + 1 ))
         fi
     done
-    
+
     # Determine strand name
     local strand_name="forward strand"
     if [ "$strand_id" = "2" ]; then
         strand_name="reverse strand"
     fi
-    
+
     # Format file counts as comma-separated list in parentheses
     local file_count_str="(${file_counts[*]// /, })"
-    
+
     local job_elapsed=$(( $(date +%s) - job_start_time ))
     echo -n "[$(date '+%H:%M:%S')]   Aggregation of $file_count_str files for "
     echo -n "${diversity_level}_${diversity_id} ${strand_name}: "
@@ -245,14 +245,14 @@ for diversity_level in "${DIVERSITY_LEVELS[@]}"; do
             discovery_log=$(printf "%s/discovery_%s_%s_strand%s_%s.log" \
                 "$LOG_DIR" "$diversity_level" "$diversity_id" "$strand_id" \
                 "$(date +%Y%m%d_%H%M%S)")
-            
+
             # Ensure log directory exists and create empty log file
             mkdir -p "$LOG_DIR"
             touch "$discovery_log" 2>/dev/null || {
                 echo -n "[$(date '+%H:%M:%S')] Warning: Could not create log file: "
                 echo "$discovery_log"
             }
-            
+
             # Launch discovery job in background
             check_diversity_strand_combinations \
                 "$diversity_level" "$diversity_id" \
@@ -269,7 +269,7 @@ total_missing=0
 for i in "${!discovery_pids[@]}"; do
     pid="${discovery_pids[$i]}"
     log_file="${discovery_logs[$i]}"
-    
+
     if wait "$pid"; then
         # Count missing combinations from log file
         missing_count=$(wc -l < "$log_file" 2>/dev/null || echo "0")
@@ -322,7 +322,7 @@ for diversity_level in "${DIVERSITY_LEVELS[@]}"; do
             job_log=$(printf "%s/aggregated_regeneration_%s_%s_strand%s_%s.log" \
                 "$LOG_DIR" "$diversity_level" "$diversity_id" "$strand_id" \
                 "$(date +%Y%m%d_%H%M%S)")
-            
+
             # Launch job in background
             process_diversity_strand_simulation \
                 "$diversity_level" "$diversity_id" \
@@ -342,7 +342,7 @@ total_files_failed=0
 for i in "${!job_pids[@]}"; do
     pid="${job_pids[$i]}"
     job_name="${job_results[$i]}"
-    
+
     if wait "$pid"; then
         total_success=$(( total_success + 1 ))
         # Each successful job aggregates 4 files (one per sampling depth)
@@ -376,4 +376,4 @@ if [ $total_failure -gt 0 ]; then
     echo "Some aggregation jobs failed. Check individual log files for details."
     echo "  Log files: $LOG_DIR/*_$(date +%Y%m%d_%H%M%S).log"
     exit 1
-fi 
+fi

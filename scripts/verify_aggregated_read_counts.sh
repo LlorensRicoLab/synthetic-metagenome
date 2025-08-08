@@ -34,17 +34,17 @@ check_file_reads() {
     local file_path="$1"
     local expected_reads="$2"
     local log_file="$3"
-    
+
     if [ ! -f "$file_path" ]; then
         echo "[$(date '+%H:%M:%S')] [ERROR] File not found: " \
             "$(basename "$file_path")" >> "$log_file"
         return 1
     fi
-    
+
     # Count lines in the file
     local line_count=$(zcat "$file_path" | wc -l)
     local actual_reads=$((line_count / 4))
-    
+
     if [ "$actual_reads" -eq "$expected_reads" ]; then
         echo "[$(date '+%H:%M:%S')] [OK] $(basename "$file_path"): " \
             "$actual_reads reads" >> "$log_file"
@@ -62,19 +62,19 @@ check_diversity_strand_verification() {
     local diversity_id="$2"
     local strand_id="$3"
     local log_file="$4"
-    
+
     local aggregated_dir="$DATASETS_DIR/${diversity_level}_diversity/aggregated"
     local job_start_time=$(date +%s)
-    
+
     # Determine strand name
     local strand_name="forward strand"
     if [ "$strand_id" = "2" ]; then
         strand_name="reverse strand"
     fi
-    
+
     local success_count=0
     local failure_count=0
-    
+
     # Check all 4 sampling depths
     # for this diversity_level + diversity_id + strand
     for sampling_depth in "${SAMPLING_DEPTHS[@]}"; do
@@ -82,20 +82,20 @@ check_diversity_strand_verification() {
         file_path=$(printf "%s/%s_%s_%s_%s.fastq.gz" \
             "$aggregated_dir" "$diversity_level" "$diversity_id" \
             "$sampling_depth" "$strand_id")
-        
+
         if check_file_reads "$file_path" "$sampling_depth" "$log_file"; then
             success_count=$(( success_count + 1 ))
         else
             failure_count=$(( failure_count + 1 ))
         fi
     done
-    
+
     local job_elapsed=$(( $(date +%s) - job_start_time ))
     echo -n "[$(date '+%H:%M:%S')] Verification of "
     echo -n "${diversity_level}_${diversity_id} "
     echo -n "${strand_name}: $success_count [OK] $failure_count [ERROR] "
     echo "(${job_elapsed}s)"
-    
+
     return $failure_count
 }
 
@@ -122,7 +122,7 @@ for diversity_level in "${DIVERSITY_LEVELS[@]}"; do
             job_log=$(printf "%s/verification_%s_%s_strand%s_%s.log" \
                 "$LOG_DIR" "$diversity_level" "$diversity_id" "$strand_id" \
                 "$(date +%Y%m%d_%H%M%S)")
-            
+
             # Launch job in background
             check_diversity_strand_verification \
                 "$diversity_level" "$diversity_id" \
@@ -141,7 +141,7 @@ total_failure=0
 for i in "${!job_pids[@]}"; do
     pid="${job_pids[$i]}"
     job_name="${job_results[$i]}"
-    
+
     if wait "$pid"; then
         total_success=$(( total_success + 1 ))
     else
@@ -162,7 +162,7 @@ for diversity_level in "${DIVERSITY_LEVELS[@]}"; do
             log_pattern=$(printf "%s/verification_%s_%s_strand%s_*.log" \
                 "$LOG_DIR" "$diversity_level" "$diversity_id" "$strand_id")
             log_file=$(ls -t $log_pattern 2>/dev/null | head -1)
-            
+
             if [ -f "$log_file" ]; then
                 # Count incorrect files
                 incorrect_count=$(grep -c "\[ERROR\]" "$log_file" 2>/dev/null || echo "0")

@@ -2,6 +2,7 @@ Arnau
 BAM
 benchmarking
 Benchmarking
+calc
 Casallo
 CentOS
 CLI
@@ -9,8 +10,10 @@ codebase
 dna
 DVC
 dvc
+ece
 env
 EOF
+Extensibility
 FASTA
 FASTQ
 fastq
@@ -18,9 +21,11 @@ furrr
 ggpubr
 gzip
 GZipped
+Hardcoded
 HPC
 HUMAnN
 Jesús
+JSON
 jsonlite
 Kraken
 linter
@@ -34,6 +39,7 @@ metatranscriptome
 optparse
 Palau
 pandoc
+Parallelization
 parsable
 Pixi
 pixi
@@ -48,6 +54,8 @@ renv
 Renviron
 Reproducibility
 reproducibility
+RND
+Roxygen
 Rprofile
 SAMSA
 schemas
@@ -57,6 +65,7 @@ SLURM
 SRA
 stringr
 styler
+Suboptimal
 subsampled
 testthat
 tidyverse
@@ -66,3 +75,4 @@ Verónica
 VicWlad
 yaml
 YAML
+️

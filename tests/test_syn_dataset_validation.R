@@ -16,7 +16,7 @@ suppressPackageStartupMessages({
 })
 
 # Set up test context
-context("FASTQ Dataset Validation Tests")
+context("FASTQ Synthetic Dataset Validation Tests")
 
 # Test configuration
 DATASET_DIR <- here("data/synthetic/datasets")
@@ -172,8 +172,6 @@ load_validation_cache <- function(files) {
 
       # Write the updated cache to file
       write_json(cached_data, CACHE_FILE, pretty = TRUE)
-    } else {
-      cat("Using cached validation results for all files.\n")
     }
   } else {
     # If the cache is not valid, we need to (re)create it
@@ -900,14 +898,9 @@ test_that("Aggregated datasets have correct structure", {
 
 
 # Run all tests
-if (require(testthat)) {
-  cat("All FASTQ validation tests completed successfully!\n")
-  # The tests will run automatically when sourced
-  quit(status = 0)
-} else {
+if (!require(testthat)) {
   cat(
     "testthat package not available. Install with: ",
     "install.packages('testthat')\n"
   )
-  quit(status = 1)
 }

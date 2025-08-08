@@ -14,7 +14,7 @@ suppressPackageStartupMessages({
 })
 
 # Set up test context
-context("SeqKit Command File Consistency Tests")
+context("SeqKit Subsampling Specification File Consistency Tests")
 
 # Test configuration
 SEQKIT_FNS <- c(
@@ -455,14 +455,10 @@ test_that("Organism-specific input files for SeqKit's subsampling exist", {
   }
 })
 
-# Run all tests
-if (require(testthat)) {
-  cat("All tests completed successfully!\n")
-  quit(status = 0)
-} else {
+## Run all tests
+if (!require(testthat)) {
   cat(
     "testthat package not available. Install with: ",
     "install.packages('testthat')\n"
   )
-  quit(status = 1)
 }

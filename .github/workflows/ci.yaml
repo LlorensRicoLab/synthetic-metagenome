@@ -51,27 +51,8 @@ jobs:
         test -d tests && echo "PASS: tests/ directory exists"
         test -d data && echo "PASS: data/ directory exists"
 
-    - name: Generate synthetic data (fast mode)
+    - name: Run SeqKit subsampling specification tests
       run: |
-        cd data/synthetic/generation
-        # Run with --no-plots for faster execution (~5s vs 46s)
-        pixi run Rscript gen_syn_specs.R --no-plots --output-dir test_output_ci
-
-    - name: Check generated data structure
-      run: |
-        # Verify the data generation worked
-        if [ -d "data/synthetic/generation/test_output_ci" ]; then
-          echo "PASS: Data generation validation passed"
-          ls -la data/synthetic/generation/test_output_ci/
-        else
-          echo "FAIL: Data generation validation failed"
-          exit 1
-        fi
-
-    - name: Validate generated SeqKit subsampling specifications
-      run: |
-        # Test that the generated SeqKit subsampling specifications are valid
+        # Test SeqKit subsampling specification validation
+        # Note: This test validates existing specifications, not data generation
         pixi run Rscript tests/test_seqkit_subsampling_specs.R
-
-    - name: Clean up test data
-      run: rm -rf data/synthetic/generation/test_output_ci

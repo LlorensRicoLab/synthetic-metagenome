@@ -428,29 +428,34 @@ test_that("Correct number of unique synthetic simulations", {
 #' Test that organism-specific input files for SeqKit's subsampling exist
 #' and are accessible
 test_that("Organism-specific input files for SeqKit's subsampling exist", {
-  check_seqkit_files_exist()
+  # Skip this test in CI environment where source FASTQ files are not available
+  if (Sys.getenv("CI") == "true") {
+    testthat::skip("Skipping source file existence check in CI environment")
+  } else {
+    check_seqkit_files_exist()
 
-  for (fn in SEQKIT_FNS) {
-    if (!file.exists(fn)) {
-      testthat::skip(paste0("File not found: ", fn))
-    }
+    for (fn in SEQKIT_FNS) {
+      if (!file.exists(fn)) {
+        testthat::skip(paste0("File not found: ", fn))
+      }
 
-    specs <- readLines(fn)
-    parsed_specs <- lapply(specs, parse_seqkit_spec)
+      specs <- readLines(fn)
+      parsed_specs <- lapply(specs, parse_seqkit_spec)
 
-    # Check that each referenced organism-specific input file exists
-    for (spec in parsed_specs) {
-      input_file_path <- here(
-        "data", "synthetic", "generation", "source_fastq",
-        spec$input_fn
-      )
-
-      expect_true(
-        file.exists(input_file_path),
-        label = paste0(
-          "Organism-specific input file not found: ", input_file_path
+      # Check that each referenced organism-specific input file exists
+      for (spec in parsed_specs) {
+        input_file_path <- here(
+          "data", "synthetic", "generation", "source_fastq",
+          spec$input_fn
         )
-      )
+
+        expect_true(
+          file.exists(input_file_path),
+          label = paste0(
+            "Organism-specific input file not found: ", input_file_path
+          )
+        )
+      }
     }
   }
 })

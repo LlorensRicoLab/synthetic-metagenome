@@ -22,7 +22,7 @@ jobs:
       run: pixi install
 
     - name: Run pre-commit checks
-      run: pixi shell -- pre-commit run --all-files
+      run: pixi run pre-commit run --all-files
 
   # Fast testing and validation
   test-and-validate:

@@ -2,9 +2,34 @@
 
 This directory contains automated tests to ensure the quality and consistency of the pipeline benchmarking project.
 
-**📖 For comprehensive validation framework documentation, see [`docs/DATA_VALIDATION.md`](../docs/DATA_VALIDATION.md)**
+**:memo: For comprehensive validation framework documentation, see [`docs/DATA_VALIDATION.md`](../docs/DATA_VALIDATION.md)**
 
-## :clipboard: Overview
+## :bookmark_tabs: Table of Contents
+
+- [:mag: Overview](#overview)
+- [:zap: Pre-commit Hooks and Code Quality](#pre-commit-hooks-and-code-quality)
+  - [:robot: R-Specific Hooks](#r-specific-hooks)
+  - [:file_folder: General File Quality Hooks](#general-file-quality-hooks)
+  - [:house: Local Custom Hooks](#local-custom-hooks)
+  - [:bulb: Design Philosophy](#design-philosophy)
+  - [:gear: Configuration](#configuration)
+- [:test_tube: Test Files](#test-files)
+- [:rocket: Running Tests](#running-tests)
+  - [:computer: Manual Testing](#manual-testing)
+  - [:zap: Pre-commit Hooks](#pre-commit-hooks)
+  - [:building_construction: CI Pipeline](#ci-pipeline)
+- [:clipboard: Test Configuration](#test-configuration)
+- [:heavy_plus_sign: Adding New Tests](#adding-new-tests)
+- [:wrench: Troubleshooting](#troubleshooting)
+  - [:warning: Common Issues](#common-issues)
+  - [:bug: Debug Mode](#debug-mode)
+- [:zap: Performance Considerations](#performance-considerations)
+- [:lock: Security](#security)
+- [:handshake: Contributing](#contributing)
+
+<div id="overview"></div>
+
+## :mag: Overview
 
 The testing infrastructure includes:
 
@@ -14,12 +39,16 @@ and content
 2. **Pre-commit Hooks** - Automatic checks that run before each commit
 3. **CI/CD Pipeline** - GitHub Actions workflow for continuous integration
 
+<div id="pre-commit-hooks-and-code-quality"></div>
+
 ## :zap: Pre-commit Hooks and Code Quality
 
 This project uses comprehensive pre-commit hooks to ensure code quality
 and consistency:
 
-### R-Specific Hooks (lorenzwalthert/precommit)
+<div id="r-specific-hooks"></div>
+
+### :robot: R-Specific Hooks
 
 - **style-files**: Automatic R code formatting using styler with tidyverse style
 - **parsable-R**: Ensures R code is syntactically correct
@@ -30,7 +59,9 @@ and consistency:
 - **spell-check**: Intelligent spell checking with comprehensive exclusions
 for technical terms
 
-### General File Quality Hooks
+<div id="general-file-quality-hooks"></div>
+
+### :file_folder: General File Quality Hooks
 
 - **trailing-whitespace**: Removes trailing whitespace
 - **end-of-file-fixer**: Ensures files end with newline
@@ -40,13 +71,17 @@ for technical terms
 - **check-merge-conflict**: Prevents committing files with merge conflict markers
 - **check-case-conflict**: Prevents case-only filename conflicts
 
-### Local Custom Hooks
+<div id="local-custom-hooks"></div>
+
+### :house: Local Custom Hooks
 
 - **test-seqkit-consistency**:
 Runs SeqKit subsampling specification consistency tests
 when relevant files are modified
 
-### :dart: Design Philosophy
+<div id="design-philosophy"></div>
+
+### :bulb: Design Philosophy
 
 **:zap: Pre-commit hooks are intentionally kept fast**
 to encourage frequent commits and maintain developer productivity.
@@ -55,7 +90,9 @@ to encourage frequent commits and maintain developer productivity.
 (including SeqKit subsampling specification consistency tests)
 are run only in the CI/CD pipeline to avoid blocking the development workflow.
 
-### Configuration
+<div id="configuration"></div>
+
+### :gear: Configuration
 
 The pre-commit configuration is in `.pre-commit-config.yaml` and includes:
 
@@ -63,6 +100,8 @@ The pre-commit configuration is in `.pre-commit-config.yaml` and includes:
 and technical documents
 - **Hook Order**: Optimized execution order for efficiency
 - **Fail Fast**: Disabled to show all issues at once
+
+<div id="test-files"></div>
 
 ## :test_tube: Test Files
 
@@ -148,9 +187,13 @@ data/synthetic/datasets/
 - **Subsequent runs**: ~1m (uses cached results)
 - **Cache invalidation**: Automatic based on file modification times
 
+<div id="running-tests"></div>
+
 ## :rocket: Running Tests
 
-### Manual Testing
+<div id="manual-testing"></div>
+
+### :construction_worker: Manual Testing
 
 ```bash
 # Run all SeqKit subsampling specification consistency tests
@@ -160,7 +203,9 @@ Rscript tests/test_seqkit_subsampling_specs.R
 Rscript tests/test_syn_dataset_validation.R
 ```
 
-### Pre-commit Hooks
+<div id="pre-commit-hooks"></div>
+
+### :zap: Pre-commit Hooks
 
 The pre-commit hooks will automatically run tests when you commit changes:
 
@@ -175,27 +220,65 @@ pre-commit run --all-files
 pre-commit run test-seqkit-subsampling-specs
 ```
 
-### :arrows_clockwise: CI/CD Pipeline
+<div id="ci-pipeline"></div>
 
-Tests are automatically run on every push to main and pull request
-via GitHub Actions.
-The workflow includes:
+## :building_construction: CI Pipeline
 
-1. **Environment Setup** - Uses Pixi for consistent dependency management
-2. **Pre-commit Validation** - Runs all pre-commit hooks on the entire codebase
-3. **:test_tube: Comprehensive Testing** -
-Runs SeqKit subsampling specification consistency tests
-and other comprehensive validations
-4. **:dna: Dataset Validation** -
-Synthetic dataset validation tests are run locally/HPC due to DVC dependencies
-5. **Cross-platform Testing** -
-Runs on Ubuntu to catch environment-specific issues
-6. **Quality Gates** -
-Enforces code formatting, syntax, and custom test requirements
+This project uses GitHub Actions for automated testing and quality assurance.
+The GitHub Actions workflow (`.github/workflows/ci.yaml`) automatically:
 
-## Test Configuration
+- Runs on every push to `main` branch
+- Runs on every pull request targeting `main`
+- Installs dependencies via Pixi
+- Executes all tests
+- Reports results
+- Uploads artifacts on failure
 
-### Expected Values
+Therefore, the CI pipeline ensures quality before code reaches the main branch.
+
+### Workflow Overview:
+
+```mermaid
+graph LR
+    A[Developer pushes code to main branch] --> B[GitHub Actions triggered]
+    B --> C[Install Pixi environment]
+    C --> D[Run pre-commit hooks]
+    D --> E{Tests pass?}
+    E -->|Yes| F[Allow merge/commit]
+    E -->|No| G[Block and report issues]
+```
+
+<div id="environment-consistency"></div>
+
+### Environment Consistency
+
+- Uses the same Pixi environment as local development
+- Ensures dependencies are identical across all environments
+- Prevents "works on my machine" issues
+
+### Quality Validation
+- Runs all pre-commit hooks on the entire codebase
+- Validates R code formatting and syntax
+- Checks for code quality issues (browser/debug statements)
+- Performs spell checking with R-specific exclusions
+- Executes comprehensive tests including SeqKit command consistency tests
+- Excludes dataset validation (requires DVC-tracked files, run locally/HPC)
+
+### Pull Request Protection
+- Prevents merging code that fails quality checks
+- Ensures all contributors follow the same standards
+- Maintains code quality across the entire project
+
+### Benefits
+- **Reliability**: Catches issues before they reach production
+- **Consistency**: All code follows the same quality standards
+- **Collaboration**: Multiple contributors can work confidently
+- **Maintenance**: Automated quality checks reduce manual review burden
+- **Reproducibility**: Ensures the pipeline works in clean environments
+
+<div id="test-configuration"></div>
+
+## :clipboard: Test Configuration
 
 The tests expect the following configuration:
 
@@ -206,7 +289,7 @@ The tests expect the following configuration:
 120 specifications per file
 (4 read depths × 3 levels × 5 simulations × 2 paired reads)
 
-### File Format
+### :memo: File Format
 
 Each line in the SeqKit subsampling specification files
 should follow this format:
@@ -226,7 +309,9 @@ the number of random number generator calls in the code.
 Any refactoring that changes the order or number of `sample()` calls
 will produce different seed values, even if the overall logic remains correct.
 
-## Adding New Tests
+<div id="adding-new-tests"></div>
+
+## :heavy_plus_sign: Adding New Tests
 
 To add new tests:
 
@@ -236,7 +321,7 @@ To add new tests:
 4. Add the test to the pre-commit configuration if needed
 5. Update this README with test documentation
 
-### Example Test Structure
+### :memo: Example Test Structure
 
 ```r
 #!/usr/bin/env Rscript
@@ -250,16 +335,18 @@ test_that("My test description", {
 })
 ```
 
+<div id="troubleshooting"></div>
+
 ## :wrench: Troubleshooting
 
-### Common Issues
+### :warning: Common Issues
 
-1. **Missing Dependencies**
+- **Missing Dependencies**
    ```bash
    pixi add r-testthat r-tidyverse r-lintr r-styler
    ```
 
-2. **Pre-commit Hook Failures**
+- **Pre-commit Hook Failures**
    ```bash
    # Update pre-commit hooks
    pre-commit autoupdate
@@ -268,11 +355,11 @@ test_that("My test description", {
    pre-commit install
    ```
 
-3. **R Version Issues**
+- **R Version Issues**
    - Ensure you're using R 4.4 or later
    - Check that all required packages are installed via Pixi
 
-### Debug Mode
+### :bug: Debug Mode
 
 To run tests in debug mode:
 
@@ -280,6 +367,28 @@ To run tests in debug mode:
 # Enable debug output
 Rscript -e "options(testthat.output_file = stdout())" tests/test_seqkit_subsampling_specs.R
 ```
+
+
+
+<div id="performance-considerations"></div>
+
+## :zap: Performance Considerations
+
+- Tests are designed to run quickly (< 30 seconds)
+- Large files are not loaded entirely into memory
+- Tests use efficient data structures and algorithms
+- CI/CD pipeline uses caching to speed up builds
+
+<div id="security"></div>
+
+## :lock: Security
+
+- Tests do not execute any external commands
+- No sensitive data is processed
+- All file operations are read-only
+- Input validation prevents code injection
+
+<div id="contributing"></div>
 
 ## :handshake: Contributing
 
@@ -289,76 +398,3 @@ When contributing to the project:
 2. **Update Tests**: Modify existing tests when changing behavior
 3. **Run Tests**: Always run tests before submitting changes
 4. **Document**: Update this README when adding new tests
-
-## CI/CD Integration
-
-The GitHub Actions workflow (`.github/workflows/ci.yaml`) automatically:
-
-- Runs on every push to `main` branch
-- Runs on every pull request targeting `main`
-- Installs dependencies via Pixi
-- Executes all tests
-- Reports results
-- Uploads artifacts on failure
-
-### CI/CD Pipeline Details
-
-This project uses GitHub Actions for automated testing and quality assurance.
-The CI pipeline provides:
-
-#### Trigger Conditions
-- Runs on every push to the `main` branch
-- Runs on every pull request targeting `main`
-- Ensures quality before code reaches the main branch
-
-#### Environment Consistency
-- Uses the same Pixi environment as local development
-- Ensures dependencies are identical across all environments
-- Prevents "works on my machine" issues
-
-#### Quality Validation
-- Runs all pre-commit hooks on the entire codebase
-- Validates R code formatting and syntax
-- Checks for code quality issues (browser/debug statements)
-- Performs spell checking with R-specific exclusions
-- **🧪 Executes comprehensive tests** including SeqKit command consistency tests
-- **📋 Excludes dataset validation**
-(requires DVC-tracked files, run locally/HPC)
-
-#### Pull Request Protection
-- Prevents merging code that fails quality checks
-- Ensures all contributors follow the same standards
-- Maintains code quality across the entire project
-
-#### Benefits
-- **Reliability**: Catches issues before they reach production
-- **Consistency**: All code follows the same quality standards
-- **Collaboration**: Multiple contributors can work confidently
-- **Maintenance**: Automated quality checks reduce manual review burden
-- **Reproducibility**: Ensures the pipeline works in clean environments
-
-#### Workflow Diagram
-
-```mermaid
-graph LR
-    A[Developer pushes code] --> B[GitHub Actions triggered]
-    B --> C[Install Pixi environment]
-    C --> D[Run pre-commit hooks]
-    D --> E{Tests pass?}
-    E -->|Yes| F[Allow merge/commit]
-    E -->|No| G[Block and report issues]
-```
-
-## :zap: Performance Considerations
-
-- Tests are designed to run quickly (< 30 seconds)
-- Large files are not loaded entirely into memory
-- Tests use efficient data structures and algorithms
-- CI/CD pipeline uses caching to speed up builds
-
-## :lock: Security
-
-- Tests do not execute any external commands
-- No sensitive data is processed
-- All file operations are read-only
-- Input validation prevents code injection

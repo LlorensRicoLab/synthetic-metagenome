@@ -1,51 +1,71 @@
-# Synthetic Dataset Generation
+# :dna: Synthetic Dataset Generation
 
 This directory contains the workflow
 for generating synthetic metatranscriptome datasets
 with controlled diversity levels for pipeline benchmarking.
 
-## Overview
+## :bookmark_tabs: Table of Contents
+
+- [:mag: Overview](#overview)
+- [:file_folder: Files](#files)
+- [:arrows_clockwise: Workflow](#workflow)
+- [:clipboard: Usage](#usage)
+  - [:scissors: Pre-processing: Subsample large FASTQ files](#scissors-pre-processing-subsample-large-fastq-files)
+  - [:house: Local execution](#house-local-execution)
+  - [:houses: SLURM execution](#houses-slurm-execution)
+  - [:recycle: Post-processing workflow](#recycle-post-processing-workflow)
+- [:chains: Dependencies](#dependencies)
+
+<div id="overview"></div>
+
+## :mag: Overview
 
 The synthetic dataset generation creates controlled datasets
 with known ground truth
 to evaluate the performance of metatranscriptome analysis pipelines.
 Datasets are generated with three diversity levels:
-- **Low diversity** (< 0.5 Simpson index)
-- **Mid diversity** (0.5 - 0.75 Simpson index)
-- **High diversity** (> 0.75 Simpson index)
+- **:red_circle: Low diversity** (< 0.5 Simpson index)
+- **:yellow_circle: Mid diversity** (0.5 - 0.75 Simpson index)
+- **:green_circle: High diversity** (> 0.75 Simpson index)
 
-## Files
+<div id="files"></div>
 
-- `gen_syn_specs.R` - Main R script for dataset generation
+## :file_folder: Files
+
+- :robot: `gen_syn_specs.R` - Main R script for dataset generation
 and subsampling specifications
-- `mapping/run_organism_map.csv` - Mapping between SRA runs
+- :link: `mapping/run_organism_map.csv` - Mapping between SRA runs
 and bacterial species
-- `abundance/` - Directory containing community abundance profiles
-- `source_fastq/` - Directory containing source FASTQ files for subsampling
-- `cache/` - Directory for caching available read counts
-- `syn_specs/` - Output directory for generated dataset specifications
+- :abacus: `abundance/` - Directory containing community abundance profiles
+- :file_folder: `source_fastq/` - Directory containing source FASTQ files for subsampling
+- :floppy_disk: `cache/` - Directory for caching available read counts
+- :memo: `syn_specs/` - Output directory for generated dataset specifications
 
-## Workflow
+<div id="workflow"></div>
 
-1. **Phase 1**: Subsample large organism-specific FASTQ GZIP files
+## :arrows_clockwise: Workflow
+
+1. **Data Preparation**: Subsample large organism-specific FASTQ GZIP files
 to ensure they don't exceed 10M reads
-2. **Phase 2**: Load and validate abundance profiles and organism mappings
-3. **Phase 3**: Generate synthetic community specifications
+2. **Data Loading**: Load and validate abundance profiles and organism mappings
+3. **Specification Generation**: Generate synthetic community specifications
 with controlled diversity values and levels, as well as relative abundances
-4. **Phase 4**: Validate read availability constraints for each organism
-5. **Phase 5**: Generate subsampling commands for different read counts
+4. **Availability Validation**: Validate read availability constraints for each organism
+5. **Dataset Specification Generation**: Generate subsampling specifications for different read counts
 (10K, 100K, 1M, 10M)
-6. **Phase 6**: Create visualization plots of abundance distributions
-7. **Phase 7**: Save results and generate SeqKit subsampling specifications
-8. **Phase 8**: Execute SLURM jobs
+6. **Visualization**: Create visualization plots of abundance distributions
+7. **Output Generation**: Save results and generate SeqKit subsampling specifications
+8. **HPC Execution**: Execute SLURM jobs
 to generate organism-specific subsampled FASTQ files
-9. **Phase 9**: Generate aggregated synthetic datasets
+9. **Dataset Aggregation**: Generate aggregated synthetic datasets
 from individual organism files
-10. **Phase 10**: Verify aggregated read counts and validate dataset integrity
+10. **Dataset Validation**: Verify aggregated read counts and validate dataset integrity
 
-## Usage
+<div id="usage"></div>
 
-### Pre-processing: Subsample large FASTQ files
+## :clipboard: Usage
+
+### :scissors: Pre-processing: Subsample large FASTQ files
 ```bash
 scripts/subsample_large_fastq.sh
 ```
@@ -55,7 +75,7 @@ Since the maximum sampling depth is 10M,
 there is no need to store organism-specific FASTQ GZIP files
 with more than 10M reads.
 
-### Local execution
+### :house: Local execution
 ```bash
 Rscript data/synthetic/generation/gen_syn_specs.R --seed 42 --sims-per-ecology 200 --sims-per-diversity 5 --output-dir data/synthetic/generation/syn_specs/
 ```
@@ -72,39 +92,40 @@ Command line arguments:
 #### Expected output
 
 The script generates:
-- `syn_specs/sims_specs.tsv` - Simulations specifications with all metadata
-- `syn_specs/seqkit_subsampling_specs_*.txt` - SeqKit subsampling commands
+- :page_facing_up: `syn_specs/sims_specs.tsv` - Simulations specifications with all metadata
+- :clipboard: `syn_specs/seqkit_subsampling_specs_*.txt` - SeqKit subsampling specifications
 for each read count
-- `syn_specs/plots/` - Visualization plots of abundance distributions
+- :bar_chart: `syn_specs/plots/` - Visualization plots of abundance distributions
 
-### SLURM execution
+### :houses: SLURM execution
 ```bash
 sbatch slurm/jobs/submit_seqkit_jobs.sh
 ```
 
 #### Expected output
 
-- Organism-specific subsampled FASTQ GZIP files in `data/synthetic/datasets/*_diversity/individual/*.fastq.gz`
+- :dna: Organism-specific subsampled FASTQ GZIP files in `data/synthetic/datasets/*_diversity/individual/*.fastq.gz`
 
-### Post-processing workflow
+### :recycle: Post-processing workflow
 
 After SLURM execution completes, run the following scripts:
 
-1. **Generate aggregated datasets:**
+#### 1. Generate aggregated datasets
 ```bash
 scripts/gen_agg_syn_datasets.sh
 ```
-#### Expected output
+##### Expected output
 - Aggregated synthetic simulations in `data/synthetic/datasets/*_diversity/aggregated/*.fastq.gz`
 
-2. **Verify aggregated read counts:**
+#### 2. Verify aggregated read counts
 ```bash
 scripts/verify_aggregated_read_counts.sh
 ```
-**Purpose:** Validates that aggregated synthetic simulations
-contain the expected number of reads for their sampling depth.
+**Purpose:** Validates that aggregated synthetic simulations contain the expected number of reads for their sampling depth.
 
-## Dependencies
+<div id="dependencies"></div>
+
+## :chains: Dependencies
 
 - R 4.2.0+
 - tidyverse

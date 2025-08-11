@@ -1,15 +1,30 @@
 # Data Validation Framework
 
-This project includes a comprehensive data validation framework that ensures data integrity at multiple levels:
+This project includes a comprehensive data validation framework
+that ensures data integrity at multiple levels:
 
 **:wrench: For testing infrastructure and setup, see [`docs/TESTING.md`](TESTING.md)**
 
-1. **:clipboard: SeqKit Subsampling Specifications**:
-Validates SeqKit subsampling specification files (runs in CI)
-2. **:dna: FASTQ Dataset Validation**: Validates generated FASTQ GZipped files
-and their structure (runs nightly on HPC)
 
-## Overview
+## :bookmark_tabs: Table of Contents
+
+- [:mag: Overview](#overview)
+- [:test_tube: Test Execution](#test-execution)
+- [:ballot_box_with_check: Validation Rules](#validation-rules)
+- [:link: Integration Points](#integration-points)
+  - [:computer: Development Workflow](#development-workflow)
+  - [:building_construction: CI Pipeline](#ci-pipeline)
+- [:technologist: Usage Examples](#usage-examples)
+- [:warning: Error Handling](#error-handling)
+- [:zap: Performance Considerations](#performance-considerations)
+- [:wrench: Troubleshooting](#troubleshooting)
+  - [:rotating_light: Common Issues](#common-issues)
+  - [:bug: Debug Mode](#debug-mode)
+- [:rocket: Future Enhancements](#future-enhancements)
+
+<div id="overview"></div>
+
+## :mag: Overview
 
 The validation framework consists of two main test suites:
 
@@ -21,7 +36,8 @@ used for generating synthetic datasets.
 
 **Key Features:**
 - :white_check_mark: File existence and accessibility checks
-- :white_check_mark: Command format validation (4 parameters: input, seed, read_count, output)
+- :white_check_mark:
+Command format validation (4 parameters: input, seed, read_count, output)
 - :white_check_mark: Read count consistency across simulations
 - :white_check_mark: Diversity level validation (low, mid, high)
 - :white_check_mark: Simulation count validation (5 per diversity level)
@@ -66,6 +82,8 @@ data/synthetic/datasets/
     ├── individual/
     └── aggregated/
 ```
+
+<div id="test-execution"></div>
 
 ## :test_tube: Test Execution
 
@@ -159,7 +177,9 @@ Individual files: `{organism}_{diversity}_{simulation}_{sampling_depth}_{pair}.f
 - :white_check_mark: Same read count in both files
 - :white_check_mark: Consistent organism metadata
 
-## 🔗 Integration Points
+<div id="integration-points"></div>
+
+## :link: Integration Points
 
 ### 1. :computer: Development Workflow
 
@@ -178,7 +198,7 @@ pixi run test-all
 Rscript tests/test_dataset_validation.R
 ```
 
-### 2. :building_construction: CI/CD Pipeline
+### 2. :building_construction: CI Pipeline
 
 The validation framework is integrated into the GitHub Actions CI pipeline:
 
@@ -208,7 +228,9 @@ Including them would require:
 while running comprehensive dataset validation locally
 or on HPC where the datasets are available.
 
-## :bulb: Usage Examples
+<div id="usage-examples"></div>
+
+## :technologist: Usage Examples
 
 ### 1. :clipboard: Validate SeqKit Subsampling Specifications
 
@@ -245,6 +267,8 @@ print(metadata)
 # $pair: "1.fastq.gz"
 ```
 
+<div id="error-handling"></div>
+
 ## :warning: Error Handling
 
 The validation framework provides detailed error reporting:
@@ -260,6 +284,8 @@ test_that("SeqKit files have correct structure", {
 })
 ```
 
+<div id="performance-considerations"></div>
+
 ## :zap: Performance Considerations
 
 - **SeqKit validation**: Fast (~26 seconds total)
@@ -270,17 +296,21 @@ test_that("SeqKit files have correct structure", {
 - **Large file handling**: Uses sampling for files > 1MB
 - **Parallel processing**: Uses `mclapply` for FASTQ validation
 
+<div id="troubleshooting"></div>
+
 ## :wrench: Troubleshooting
+
+<div id="common-issues"></div>
 
 ### :rotating_light: Common Issues
 
-1. **Missing SeqKit Subsampling Specification files**
+- **Missing SeqKit Subsampling Specification files**
    ```bash
    # Download from DVC
    dvc pull data/synthetic/generation/syn_specs.dvc
    ```
 
-2. **Missing datasets**
+- **Missing datasets**
    ```bash
    # Download from DVC (if available)
    dvc pull data/synthetic/datasets.dvc
@@ -292,11 +322,13 @@ test_that("SeqKit files have correct structure", {
    ./scripts/gen_agg_syn_datasets.sh
    ```
 
-3. **Permission issues**
+- **Permission issues**
    ```bash
    # Check file permissions
    ls -la data/synthetic/datasets/
    ```
+
+<div id="debug-mode"></div>
 
 ### :bug: Debug Mode
 
@@ -307,12 +339,10 @@ Enable verbose output for debugging:
 options(testthat.output_file = "validation_debug.log")
 ```
 
+<div id="future-enhancements"></div>
+
 ## :rocket: Future Enhancements
 
-- [ ] **Validation result caching** (similar to existing read availability caching)
-  - Store validation results in cache files
-  - Skip re-validation of unchanged files
-  - Implement cache invalidation based on file modification times
 - [ ] **Custom validation schemas** for different file types
   - Extend validation framework to support different file formats (FASTA, SAM, BAM)
   - Allow custom validation rules per file type

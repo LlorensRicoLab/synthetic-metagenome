@@ -2,50 +2,42 @@
 
 A comprehensive benchmarking framework for evaluating metatranscriptome analysis pipelines using synthetic datasets.
 
-## Table of Contents
+## :bookmark_tabs: Table of Contents
 
-- [Project Overview](#project-overview)
-- [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Environment Setup](#environment-setup)
-  - [Core Dependencies](#core-dependencies)
-- [Project Structure](#project-structure)
-- [Usage](#usage)
-  - [Synthetic Data Generation](#1-synthetic-data-generation)
-  - [Testing](#2-testing)
-    - [Running Tests Manually](#running-tests-manually)
-    - [Automated Testing](#automated-testing)
-- [Development](#development)
-  - [Setting Up Development Environment](#setting-up-development-environment)
-  - [Adding New Pipelines](#adding-new-pipelines)
-  - [Contributing](#contributing)
-- [Troubleshooting](#troubleshooting)
-  - [Common Issues](#common-issues)
-  - [Getting Help](#getting-help)
-- [License](#license)
-- [Authors](#authors)
-- [Citation](#citation)
+- [:mag: Project Overview](#project-overview)
+- [:rocket: Quick Start](#quick-start)
+- [:hammer_and_wrench: Environment Setup](#environment-setup)
+- [:file_folder: Project Structure](#project-structure)
+- [:technologist: Usage](#usage)
+- [:construction: Development](#development)
+- [:wrench: Troubleshooting](#troubleshooting)
+- [:page_with_curl: License](#license)
+- [:busts_in_silhouette: Authors](#authors)
+- [:memo: Citation](#citation)
 
-## Project Overview
+<div id="project-overview"></div>
+
+## :mag: Project Overview
 
 This project aims to systematically evaluate and compare different metatranscriptome analysis pipelines (HUMAnN3, Kraken2/Bracken, SAMSA2, RealMap, VicWlad) using carefully designed synthetic datasets with varying diversity levels.
 
-## Quick Start
+<div id="quick-start"></div>
 
-### Prerequisites
+## :rocket: Quick Start
+
+### :pushpin: Prerequisites
 
 - **Linux/Unix system** (tested on CentOS 7+)
 
-### Installation
+### :package: Installation
 
-1. **Clone the repository**:
+**1. Clone the repository**:
    ```bash
    git clone git@github.com:LlorensRicoLab/pipeline-benchmarking.git
    cd pipeline-benchmarking
    ```
 
-2. **Set up the environment**:
+**2. Set up the environment**:
    ```bash
    # Install Pixi if not already installed
    curl -fsSL https://pixi.sh/install.sh | bash
@@ -57,7 +49,7 @@ This project aims to systematically evaluate and compare different metatranscrip
    pixi shell
    ```
 
-3. **Verify installation**:
+**3. Verify installation**:
    ```bash
    # Check pixi environment
    pixi list
@@ -66,7 +58,7 @@ This project aims to systematically evaluate and compare different metatranscrip
    Rscript -e "sessionInfo()"
    ```
 
-### Daily Usage
+### :calendar: Daily Usage
 
 #### Starting Work
 ```bash
@@ -115,7 +107,9 @@ pixi install
 pixi update
 ```
 
-## Environment Setup
+<div id="environment-setup"></div>
+
+## :hammer_and_wrench: Environment Setup
 
 This project uses **Pixi** for comprehensive dependency management, providing:
 - **R interpreter** (version 4.4) and R packages
@@ -124,7 +118,7 @@ This project uses **Pixi** for comprehensive dependency management, providing:
 - **HPC environment compatibility**
 - **Research reproducibility**
 
-### Why Pixi?
+### :question: Why Pixi?
 
 Pixi handles everything automatically:
 - R interpreter and packages (tidyverse, ggpubr, vegan, testthat, etc.)
@@ -133,14 +127,16 @@ Pixi handles everything automatically:
 - HPC environment compatibility
 - Research reproducibility
 
-### Core Dependencies
+### :chains: Core Dependencies
 - **R >= 4.4** - Statistical computing and graphics
 - **tidyverse** - Data manipulation and visualization
 - **ggpubr** - Publication-ready plots
 - **vegan** - Community ecology analysis
 - **pandoc** - Document conversion
 
-## Project Structure
+<div id="project-structure"></div>
+
+## :file_folder: Project Structure
 
 ```
 pipeline_benchmarking/
@@ -160,7 +156,7 @@ pipeline_benchmarking/
 │           ├── source_fastq/               # Source FASTQ files (DVC-tracked)
 │           └── syn_specs/                  # Generated specifications (DVC-tracked)
 ├── docs/                                   # Documentation
-│   ├── CI_CD_GUIDE.md                      # CI/CD setup and usage
+│   ├── QUALITY_ASSURANCE.md                 # Quality assurance framework
 │   ├── DATA_VALIDATION.md                  # Data validation framework
 │   ├── REFACTORING_SUMMARY.md              # Technical refactoring details
 │   ├── SYNTHETIC_DATA_GENERATION.md        # Synthetic data generation guide
@@ -193,9 +189,11 @@ pipeline_benchmarking/
     └── test_syn_dataset_validation.R       # Dataset validation
 ```
 
-## Usage
+<div id="usage"></div>
 
-### 1. Synthetic Data Generation
+## :technologist: Usage
+
+### :dna: Synthetic Data Generation
 
 Generate synthetic datasets using the original R scripts:
 
@@ -214,7 +212,7 @@ Rscript gen_syn_specs.R
 See [`docs/SYNTHETIC_DATA_GENERATION.md`](docs/SYNTHETIC_DATA_GENERATION.md)
 for detailed usage options.
 
-### 2. Testing
+### :test_tube: Testing
 
 This project includes comprehensive testing and code quality infrastructure:
 
@@ -242,11 +240,13 @@ GitHub Actions validates code quality on every push and pull request
 - **Custom Tests**:
 SeqKit subsampling specification validation ensures data generation reliability
 
-**📖 For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md)**
+**:book: For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md)**
 
-## Development
+<div id="development"></div>
 
-### Setting Up Development Environment
+## :construction: Development
+
+### :building_construction: Setting Up Development Environment
 
 If you plan to contribute to this project, you'll need to set up additional development tools:
 
@@ -258,7 +258,7 @@ pixi shell
 pre-commit install
 ```
 
-### Code Quality and Testing
+### :white_check_mark: Code Quality and Testing
 
 This project uses comprehensive code quality tools and testing infrastructure:
 
@@ -266,9 +266,9 @@ This project uses comprehensive code quality tools and testing infrastructure:
 - **Custom Tests**: SeqKit command consistency validation
 - **CI/CD Pipeline**: Automated testing on GitHub Actions
 
-**📖 For detailed development setup and testing documentation, see [docs/TESTING.md](docs/TESTING.md)**
+**:book: For detailed development setup and testing documentation, see [docs/TESTING.md](docs/TESTING.md)**
 
-### Adding New Pipelines
+### :heavy_plus_sign: Adding New Pipelines
 
 1. Create a new directory in `pipelines/`
 2. Add configuration files in `config/`
@@ -276,7 +276,7 @@ This project uses comprehensive code quality tools and testing infrastructure:
 4. Add utility functions in `utils/`
 5. Update evaluation scripts to include the new pipeline
 
-### Contributing
+### :handshake: Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/new-pipeline`
@@ -284,9 +284,11 @@ This project uses comprehensive code quality tools and testing infrastructure:
 4. Push to your fork: `git push origin feature/new-pipeline`
 5. Create a pull request
 
-## Troubleshooting
+<div id="troubleshooting"></div>
 
-### Common Issues
+## :wrench: Troubleshooting
+
+### :warning: Common Issues
 
 1. **Pixi environment not found**:
    ```bash
@@ -312,7 +314,7 @@ This project uses comprehensive code quality tools and testing infrastructure:
    pixi self update
    ```
 
-### Best Practices
+### :star: Best Practices
 
 1. **Always use pixi shell** before running R scripts
 **or use pixi run** for direct execution
@@ -321,22 +323,28 @@ This project uses comprehensive code quality tools and testing infrastructure:
 4. **Update pyproject.toml** for dependency changes
 5. **Test on clean environment** before major releases
 
-### Getting Help
+### :sos: Getting Help
 
 - Check the logs in `results/logs/`
 - Review pipeline-specific documentation
 - Open an issue on GitHub with detailed error information
 
-## License
+<div id="license"></div>
+
+## :page_with_curl: License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## Authors
+<div id="authors"></div>
+
+## :busts_in_silhouette: Authors
 
 - Francisco Merino-Casallo (fmerino at cipf.es)
 - Verónica Llorens Rico (vllorens at cipf.es)
 
-## Citation
+<div id="citation"></div>
+
+## :memo: Citation
 
 If you use this benchmarking framework in your research, please cite:
 

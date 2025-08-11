@@ -62,6 +62,7 @@ schemas
 seqkit
 SeqKit
 SLURM
+sos
 SRA
 stringr
 styler

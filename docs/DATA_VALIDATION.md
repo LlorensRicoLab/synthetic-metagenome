@@ -291,10 +291,23 @@ test_that("SeqKit files have correct structure", {
 - **SeqKit validation**: Fast (~26 seconds total)
 - **Synthetic dataset validation**: Comprehensive with intelligent caching
   - **First run**: ~3.5 minutes (creates cache)
+  - **Normal operation**: ~1 minute (uses validated cached results)
+  - **Partial cache updates**:
+  ~1-3 minutes (updates cache with new and modified files)
+  - **Complete cache regeneration**: ~3.5 minutes (when needed)
   - **Without caching**: ~37 minutes (10x slower)
-  - **Subsequent runs**: ~1m (uses cached results)
 - **Large file handling**: Uses sampling for files > 1MB
 - **Parallel processing**: Uses `mclapply` for FASTQ validation
+
+### :gear: Cache Behavior
+
+The validation framework uses an optimized caching strategy:
+
+- **Files modified but already in cache**:
+Don't trigger complete cache regeneration
+- **Missing cached files on disk**:
+Require user manual intervention (clear error messages)
+- **Partial validation**: Only re-validates changed files for faster updates
 
 <div id="troubleshooting"></div>
 

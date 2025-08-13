@@ -182,10 +182,12 @@ data/synthetic/datasets/
 ```
 
 **Performance:**
-- **First run**: ~3.5 minutes (validates all files)
+- **First run**: ~3.5 minutes (creates cache)
+- **Normal operation**: ~1 minute (uses validated cached results)
+- **Partial cache updates**:
+~1-3 minutes (updates cache with new and modified files)
+- **Complete cache regeneration**: ~3.5 minutes (when needed)
 - **Without caching**: ~37 minutes (10x slower)
-- **Subsequent runs**: ~1m (uses cached results)
-- **Cache invalidation**: Automatic based on file modification times
 
 <div id="running-tests"></div>
 

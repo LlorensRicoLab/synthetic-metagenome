@@ -50,70 +50,219 @@ get_file_timestamp <- function(file_path) {
   }
 }
 
+#' @title Get Pair File Path
+#' @description Gets the path to the paired FASTQ file
+#' @param file_path Path to one FASTQ file
+#' @return Path to the paired FASTQ file
+get_pair_file <- function(file_path) {
+  # Extract the base name without the pair number
+  base_name <- sub("_[12]\\.fastq\\.gz$", "", file_path)
+
+  # Determine the opposite pair number
+  if (grepl("_1\\.fastq\\.gz$", file_path)) {
+    pair_file <- paste0(base_name, "_2.fastq.gz")
+  } else if (grepl("_2\\.fastq\\.gz$", file_path)) {
+    pair_file <- paste0(base_name, "_1.fastq.gz")
+  } else {
+    # Not a paired file, return the same path
+    return(file_path)
+  }
+
+  pair_file
+}
+
 #' @title Validate Cache
 #' @description Checks if the cached validation data is valid
-#' and contains all required files
+#'   and contains all required files
 #' @param cache_file Path to cache file
 #' @param files Vector of file paths to validate
-#' @return TRUE if cache is valid, FALSE otherwise
+#' @return List with 'valid' (TRUE/FALSE) and 'problems' (list of issues)
 is_cache_valid <- function(cache_file, files) {
   if (!file.exists(cache_file)) {
-    return(FALSE)
+    return(
+      list(
+        valid = FALSE,
+        problems = list(
+          type = "no_cache",
+          message = "Cache file does not exist"
+        )
+      )
+    )
   }
 
   # Load cache and check if it has the expected structure
   cached_data <- fromJSON(cache_file)
   required_fields <- c(
-    "file_path", "read_count", "format_valid", "file_timestamp", "file_size"
+    "file_path",
+    "read_count",
+    "format_valid",
+    "file_timestamp",
+    "file_size"
   )
 
   if (!all(required_fields %in% names(cached_data))) {
-    return(FALSE)
+    return(
+      list(
+        valid = FALSE,
+        problems = list(
+          type = "invalid_structure",
+          message = "Cache missing required fields"
+        )
+      )
+    )
   }
 
-  # Check if all expected files are present
-  if (!all(files %in% cached_data$file_path)) {
-    return(FALSE)
+  # Check for missing files (physical existence)
+  missing_files <- character(0)
+
+  # Check physical existence
+  missing_files <- cached_data$file_path[!file.exists(cached_data$file_path)]
+
+  # If any files are missing, cache is invalid
+  if (length(missing_files) > 0) {
+    return(list(
+      valid = FALSE,
+      problems = list(
+        type = "missing_files",
+        files = missing_files,
+        message = "The following files are missing from disk"
+      )
+    ))
   }
 
-  TRUE
+  list(valid = TRUE, problems = list())
 }
 
-#' @title Get Changed Files
-#' @description Identifies files that have been modified since last cache update
-#' @param cache_file Path to cache file
-#' @param files Vector of file paths to check
-#' @return Vector of changed file paths
-get_changed_files <- function(cache_file, files) {
-  if (!file.exists(cache_file)) {
-    return(files) # All files need validation if no cache exists
+#' @title Report Cache Problems
+#' @description Reports detailed information about cache problems
+#' @param problems List of problems detected by is_cache_valid
+#' @return NULL (aborts execution with detailed error message)
+report_cache_problems <- function(problems) {
+  if (problems$type == "no_cache") {
+    cli::cli_abort(problems$message)
   }
 
-  cached_data <- fromJSON(cache_file)
-  cached_data$file_timestamp <- as.POSIXct(
-    cached_data$file_timestamp,
-    origin = "1970-01-01"
-  )
+  if (problems$type == "invalid_structure") {
+    cli::cli_abort(problems$message)
+  }
 
-  changed_files <- character(0)
+  if (problems$type == "missing_files") {
+    err_msg <- paste(
+      "The following files are missing:\n",
+      paste(problems$files, collapse = "\n")
+    )
+    info_msg <- paste(
+      "Manual intervention required:\n\n",
+      "a) Recover the original synthetic datasets using DVC registry.\n\n",
+      "b) Remove the validation cache to regenerate."
+    )
+
+    cli::cli_abort(
+      c(
+        "Missing files detected in validation cache.",
+        "x" = err_msg,
+        "i" = info_msg
+      )
+    )
+  }
+}
+
+#' @title Update Cache
+#' @description Updates cache for new and modified files in a single pass
+#' @param cached_data Existing cache data
+#' @param files Vector of all file paths to check
+#' @return Updated cache data
+update_cache <- function(cached_data, files) {
+  # Detect new and modified files in one pass
+  new_files <- character(0)
+  modified_files <- character(0)
 
   for (file_path in files) {
-    current_timestamp <- get_file_timestamp(file_path)
-    cached_timestamp <- cached_data$file_timestamp[
-      cached_data$file_path == file_path
-    ]
+    if (!file.exists(file_path)) next # Skip missing files
 
-    # Check if file needs re-validation
-    if (
-      (length(cached_timestamp) == 0) ||
-        (is.na(cached_timestamp)) ||
-        (current_timestamp > cached_timestamp)
-    ) {
-      changed_files <- c(changed_files, file_path)
+    # Check if file is new (not in cache)
+    if (!file_path %in% cached_data$file_path) {
+      new_files <- c(new_files, file_path)
+    } else {
+      # Check if existing file has been modified
+      current_timestamp <- get_file_timestamp(file_path)
+      cached_timestamp <- cached_data$file_timestamp[
+        cached_data$file_path == file_path
+      ]
+
+      if (length(cached_timestamp) > 0 && !is.na(cached_timestamp)) {
+        cached_timestamp <- as.POSIXct(cached_timestamp, origin = "1970-01-01")
+        if (current_timestamp > cached_timestamp) {
+          modified_files <- c(modified_files, file_path)
+        }
+      }
     }
   }
 
-  changed_files
+  # Process new files
+  if (length(new_files) > 0) {
+    cat("Adding", length(new_files), "new files to cache...\n")
+
+    new_results <- mclapply(
+      new_files,
+      function(file_path) {
+        list(
+          file_path = file_path,
+          read_count = count_fastq_reads(file_path),
+          format_valid = validate_fastq_format(file_path),
+          file_timestamp = as.character(get_file_timestamp(file_path)),
+          file_size = file.size(file_path)
+        )
+      },
+      mc.cores = detectCores() - 1
+    )
+
+    new_data <- dplyr::bind_rows(new_results)
+    cached_data <- dplyr::bind_rows(cached_data, new_data)
+  }
+
+  # Process modified files
+  if (length(modified_files) > 0) {
+    cat("Re-validating", length(modified_files), "modified files...\n")
+
+    modified_results <- mclapply(
+      modified_files,
+      function(file_path) {
+        list(
+          file_path = file_path,
+          read_count = count_fastq_reads(file_path),
+          format_valid = validate_fastq_format(file_path),
+          file_timestamp = as.character(get_file_timestamp(file_path)),
+          file_size = file.size(file_path)
+        )
+      },
+      mc.cores = detectCores() - 1
+    )
+
+    # Update existing entries
+    for (result in modified_results) {
+      cached_data$read_count[
+        cached_data$file_path == result$file_path
+      ] <- result$read_count
+      cached_data$format_valid[
+        cached_data$file_path == result$file_path
+      ] <- result$format_valid
+      cached_data$file_timestamp[
+        cached_data$file_path == result$file_path
+      ] <- result$file_timestamp
+      cached_data$file_size[
+        cached_data$file_path == result$file_path
+      ] <- result$file_size
+    }
+  }
+
+  # Ensure cache directory exists before writing
+  ensure_cache_directory()
+
+  # Write updated cache
+  write_json(cached_data, CACHE_FILE, pretty = TRUE)
+
+  cached_data
 }
 
 #' @title Load Validation Cache
@@ -121,90 +270,58 @@ get_changed_files <- function(cache_file, files) {
 #' @param files Vector of file paths to validate
 #' @return Data frame with validation results
 load_validation_cache <- function(files) {
-  # Check if the cache is valid
-  if (is_cache_valid(CACHE_FILE, files)) {
+  # Check if cache exists and is valid
+  if (file.exists(CACHE_FILE)) {
     cached_data <- fromJSON(CACHE_FILE)
-    cached_data$file_timestamp <- as.POSIXct(
-      cached_data$file_timestamp,
-      origin = "1970-01-01"
+
+    # Check if cache has required structure
+    required_fields <- c(
+      "file_path",
+      "read_count",
+      "format_valid",
+      "file_timestamp",
+      "file_size"
     )
 
-    # Check if there are any changed files since the last cache update
-    changed_files <- get_changed_files(CACHE_FILE, files)
-
-    # If there are changed files, we need to update the cache
-    if (length(changed_files) > 0) {
-      cat("Re-validating", length(changed_files), "changed files...\n")
-
-      # Get validation results for changed files
-      new_results <- mclapply(
-        changed_files,
-        function(file_path) {
-          list(
-            file_path = file_path,
-            read_count = count_fastq_reads(file_path),
-            format_valid = validate_fastq_format(file_path),
-            file_timestamp = get_file_timestamp(file_path),
-            file_size = file.size(file_path)
-          )
-        },
-        mc.cores = detectCores() - 1
-      )
-
-      # Update the cache with new information
-      for (result in new_results) {
-        cached_data$read_count[
-          cached_data$file_path == result$file_path
-        ] <- result$read_count
-        cached_data$format_valid[
-          cached_data$file_path == result$file_path
-        ] <- result$format_valid
-        cached_data$file_timestamp[
-          cached_data$file_path == result$file_path
-        ] <- result$file_timestamp
-        cached_data$file_size[
-          cached_data$file_path == result$file_path
-        ] <- result$file_size
+    if (all(required_fields %in% names(cached_data))) {
+      # Check if cache is valid (this will abort if files are missing)
+      cache_validation_result <- is_cache_valid(CACHE_FILE, files)
+      if (cache_validation_result$valid) {
+        # Cache is valid, update for any changes
+        cached_data <- update_cache(cached_data, files)
+        return(cached_data)
+      } else {
+        # Cache is invalid, report problems
+        report_cache_problems(cache_validation_result$problems)
       }
-
-      # Ensure cache directory exists before writing
-      ensure_cache_directory()
-
-      # Write the updated cache to file
-      write_json(cached_data, CACHE_FILE, pretty = TRUE)
     }
-  } else {
-    # If the cache is not valid, we need to (re)create it
-    cat("Creating new validation cache for", length(files), "files...\n")
-
-    cached_data <- mclapply(
-      files,
-      function(file_path) {
-        list(
-          file_path = file_path,
-          read_count = count_fastq_reads(file_path),
-          format_valid = validate_fastq_format(file_path),
-          file_timestamp = get_file_timestamp(file_path),
-          file_size = file.size(file_path)
-        )
-      },
-      mc.cores = detectCores() - 1
-    )
-
-    # Convert list to data frame
-    cached_data <- do.call(rbind, lapply(cached_data, as.data.frame))
-
-    # Ensure cache directory exists before writing
-    ensure_cache_directory()
-
-    # Write the new cache to file
-    write_json(cached_data, CACHE_FILE, pretty = TRUE)
   }
 
-  # Return as data frame
-  if (is.list(cached_data) && !is.data.frame(cached_data)) {
-    cached_data <- do.call(rbind, lapply(cached_data, as.data.frame))
-  }
+  # If we reach here, we need to create a new cache
+  cat("Creating new validation cache for", length(files), "files...\n")
+
+  cached_data <- mclapply(
+    files,
+    function(file_path) {
+      list(
+        file_path = file_path,
+        read_count = count_fastq_reads(file_path),
+        format_valid = validate_fastq_format(file_path),
+        file_timestamp = as.character(get_file_timestamp(file_path)),
+        file_size = file.size(file_path)
+      )
+    },
+    mc.cores = detectCores() - 1
+  )
+
+  # Convert list to data frame
+  cached_data <- dplyr::bind_rows(cached_data)
+
+  # Ensure cache directory exists before writing
+  ensure_cache_directory()
+
+  # Write the new cache to file
+  write_json(cached_data, CACHE_FILE, pretty = TRUE)
 
   cached_data
 }
@@ -488,8 +605,8 @@ validate_fastq_format <- function(file_path, cache_data = NULL) {
 # TEST FUNCTIONS
 # =============================================================================
 
-#' Test that FASTQ files are valid and accessible (cached)
-test_that("FASTQ files are valid and accessible (cached)", {
+#' Test that FASTQ files are valid and accessible
+test_that("FASTQ files are valid and accessible", {
   check_datasets_exist()
 
   # Load validation cache for all files
@@ -539,8 +656,9 @@ test_that("FASTQ files are valid and accessible (cached)", {
           expect_true(
             result$gzip_valid,
             label = paste0(
-              "FASTQ file has invalid gzip format.\n",
-              "ℹ File path: ", result$file_path
+              "FASTQ file appears to be corrupted or incomplete.\n",
+              "ℹ File path: ", result$file_path, "\n",
+              "ℹ Manual intervention required: Restore from backup or DVC"
             )
           )
         }
@@ -579,8 +697,9 @@ test_that("FASTQ files are valid and accessible (cached)", {
           expect_true(
             result$gzip_valid,
             label = paste0(
-              "FASTQ file has invalid gzip format.\n",
-              "ℹ File path: ", result$file_path
+              "FASTQ file appears to be corrupted or incomplete.\n",
+              "ℹ File path: ", result$file_path, "\n",
+              "ℹ Manual intervention required: Restore from backup or DVC"
             )
           )
         }

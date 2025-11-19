@@ -63,15 +63,7 @@ repos:
       - id: spell-check
         exclude: >
           (?x)^(
-          (.*/|)NAMESPACE|
-          (.*/|)WORDLIST|
-          (.*/|)\.Rbuildignore|
-          (.*/|)\.Renviron|
-          (.*/|)\.Rprofile|
-          (.*/|)\.gitignore|
-          (.*/|)\.pre-commit-.*|
-          (.*/|)\.travis\.yml|
-          (.*/|)appveyor\.yml|
+          (.*/|)NAMESPACE|m
           (.*/|)renv/settings\.dcf|
           (.*/|)renv\.lock|
           (.*/|)pixi\.lock|

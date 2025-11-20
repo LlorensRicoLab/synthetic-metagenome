@@ -588,29 +588,58 @@ gen_sim_specs <- function(config, run_organism_map) {
 
 #' @title Generate Read Counts
 #' @description Generates read count distributions
-#' for different sequencing depths
+#' for different sequencing depths using proportional scaling
 #' @param sims_specs Simulation specifications
 #' @param sampling_depths Vector of sampling depths
 #' @return Data frame with read count results
 gen_read_counts <- function(sims_specs, sampling_depths) {
+  # Get the minimum sampling depth to use as base
+  min_sampling_depth <- min(sampling_depths)
+
+  # Generate base read counts for the minimum sampling depth
+  base_read_counts <- sims_specs %>%
+    dplyr::select(
+      dplyr::all_of(c("eco_state", "sim_number", "organism", "rel_abundance"))
+    ) %>%
+    dplyr::group_by(
+      dplyr::across(c("eco_state", "sim_number"))
+    ) %>%
+    dplyr::mutate(
+      base_num_reads_per_organism = as.vector(
+        rmultinom(
+          1,
+          size = min_sampling_depth,
+          prob = .data$rel_abundance
+        )
+      )
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(
+      dplyr::all_of(
+        c("eco_state", "sim_number", "organism", "base_num_reads_per_organism")
+      )
+    )
+
+  # Generate proportional read counts for all sampling depths
   read_count_results <- purrr::map_dfr(
-    sampling_depths, function(sampling_depth) {
-      sims_specs %>%
-        dplyr::select(
-          dplyr::all_of(
-            c("eco_state", "sim_number", "organism", "rel_abundance")
-          )
-        ) %>%
-        dplyr::group_by(
-          dplyr::across(c("eco_state", "sim_number"))
-        ) %>%
+    sampling_depths,
+    function(sampling_depth) {
+      base_read_counts %>%
         dplyr::mutate(
-          num_reads_per_organism = as.vector(
-            rmultinom(1, size = sampling_depth, prob = .data$rel_abundance)
-          ),
+          num_reads_per_organism = as.integer(round(
+            .data$base_num_reads_per_organism *
+              (sampling_depth / min_sampling_depth)
+          )),
           sampling_depth = sampling_depth
         ) %>%
-        dplyr::ungroup()
+        dplyr::select(
+          dplyr::all_of(
+            c(
+              "eco_state", "sim_number", "organism",
+              "num_reads_per_organism", "sampling_depth"
+            )
+          )
+        )
     },
     .id = NULL
   )
@@ -619,7 +648,7 @@ gen_read_counts <- function(sims_specs, sampling_depths) {
   sims_specs_with_reads <- sims_specs %>%
     dplyr::inner_join(
       read_count_results,
-      by = c("eco_state", "sim_number", "organism", "rel_abundance")
+      by = c("eco_state", "sim_number", "organism")
     ) %>%
     # Ensure all original columns are preserved
     dplyr::select(

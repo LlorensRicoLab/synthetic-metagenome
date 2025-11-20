@@ -16,9 +16,9 @@
 #' --sims-per-ecology 200 --sims-per-diversity 5 --output-dir syn_specs/
 #' --seed 42
 
-# =============================================================================
+# ============================================================================
 # SETUP AND DEPENDENCIES
-# =============================================================================
+# ============================================================================
 
 # Load required libraries
 suppressPackageStartupMessages({
@@ -31,6 +31,7 @@ suppressPackageStartupMessages({
   library(furrr)
   library(vegan)
   library(stringr)
+  library(cli)
   library(rlang)
 })
 
@@ -42,9 +43,9 @@ options(scipen = 999)
 # Equivalent to @importFrom rlang .data in packages
 .data <- rlang::.data
 
-# =============================================================================
+# ============================================================================
 # CONSTANTS
-# =============================================================================
+# ============================================================================
 
 # Sampling depths for synthetic dataset generation: read counts to simulate
 SAMPLING_DEPTHS <- c(10^4, 10^5, 10^6, 10^7)
@@ -61,9 +62,9 @@ SOURCE_FASTQ_DIR <- here("data", "source_fastq")
 CACHE_DIR <- here("data", "cache")
 CACHE_FILE <- file.path(CACHE_DIR, "available_reads_cache.json")
 
-# =============================================================================
+# ============================================================================
 # CACHE DIRECTORY MANAGEMENT
-# =============================================================================
+# ============================================================================
 
 #' @title Ensure Cache Directory Exists
 #' @description Creates the cache directory if it doesn't exist
@@ -74,9 +75,9 @@ ensure_cache_directory <- function() {
   }
 }
 
-# =============================================================================
+# ============================================================================
 # CONFIGURATION AND CLI
-# =============================================================================
+# ============================================================================
 
 #' @title Parse Command Line Arguments
 #' @description Parses and validates command line arguments
@@ -152,9 +153,9 @@ initialize_configuration <- function(opt) {
   config
 }
 
-# =============================================================================
+# ============================================================================
 # DATA LOADING FUNCTIONS
-# =============================================================================
+# ============================================================================
 
 #' @title Load Organism Mapping Data
 #' @description Loads the organism mapping data from CSV file
@@ -204,9 +205,9 @@ get_abundance_data <- function(abundance_dir) {
   abundance_data
 }
 
-# =============================================================================
+# ============================================================================
 # ORGANISM-SPECIFIC READS AVAILABILITY AND CACHING
-# =============================================================================
+# ============================================================================
 
 #' @title Validate FASTQ File Pair
 #' @description Validates that both forward and reverse FASTQ files exist
@@ -516,9 +517,9 @@ load_available_reads <- function(config, run_organism_map) {
     dplyr::select(dplyr::all_of(c("run_accession", "available_reads")))
 }
 
-# =============================================================================
+# ============================================================================
 # SIMULATIONS SPECIFICATIONS GENERATION
-# =============================================================================
+# ============================================================================
 
 #' @title Generate Simulation Specifications
 #' @description Creates simulation specifications
@@ -581,9 +582,9 @@ gen_sim_specs <- function(config, run_organism_map) {
   sims_specs
 }
 
-# =============================================================================
+# ============================================================================
 # READ COUNT GENERATION
-# =============================================================================
+# ============================================================================
 
 #' @title Generate Read Counts
 #' @description Generates read count distributions
@@ -635,9 +636,9 @@ gen_read_counts <- function(sims_specs, sampling_depths) {
   sims_specs_with_reads
 }
 
-# =============================================================================
+# ============================================================================
 # VALIDITY FILTERING
-# =============================================================================
+# ============================================================================
 
 #' @title Filter Valid Simulations
 #' @description Filters simulations
@@ -693,20 +694,17 @@ filter_valid_sims <- function(
   # Report excluded simulations based on required reads vs available reads.
   excluded_sims <- sim_validity %>% filter(!.data$is_valid)
   if (nrow(excluded_sims) > 0) {
-    cat(
-      get_timestamp(),
-      "    [WARNING] Excluded",
-      nrow(excluded_sims),
-      "simulations due to read limitations\n"
+    cli::cli_alert_warning(
+      "Excluded {nrow(excluded_sims)} simulations due to read limitations"
     )
   }
 
   sims_specs_valid
 }
 
-# =============================================================================
+# ============================================================================
 # DIVERSITY FILTERING
-# =============================================================================
+# ============================================================================
 
 #' @title Select Simulations by Diversity
 #' @description Selects n_sims_per_diversity_level simulations
@@ -771,18 +769,17 @@ select_sims_by_diversity <- function(
     dplyr::filter(.data$n_valid < n_sims_per_diversity_level)
 
   if (nrow(insufficient_sims) > 0) {
-    cat(
-      get_timestamp(),
-      "    [WARNING] Insufficient valid simulations for some combinations\n"
+    cli::cli_alert_warning(
+      "Insufficient valid simulations for some combinations of depth/level"
     )
   }
 
   sims_specs_pick
 }
 
-# =============================================================================
+# ============================================================================
 # OUTPUT GENERATION
-# =============================================================================
+# ============================================================================
 
 #' @title Generate Individual Specification Plots
 #' @description Creates individual bar plots for each simulation
@@ -1138,219 +1135,183 @@ calc_summary_stats <- function(simulation_data, config) {
 #' per combination
 #' @return NULL (invisibly)
 log_valid_sims_breakdown <- function(valid_sims_per_combination) {
-  cat("  Valid simulations by (sampling_depth, diversity_level):\n")
+  cli::cli_alert_info(
+    "  Valid simulations by (sampling_depth, diversity_level):"
+  )
   for (i in seq_len(nrow(valid_sims_per_combination))) {
     depth <- valid_sims_per_combination$sampling_depth[i]
     level <- as.character(valid_sims_per_combination$diversity_level[i])
     count <- valid_sims_per_combination$n_valid_sims[i]
-    cat("    Depth", depth, "-", level, "diversity:", count, "simulations\n")
+    cli::cli_alert_info(sprintf(
+      "    Depth %s - %s diversity: %s simulations",
+      depth, level, count
+    ))
   }
 
   invisible(NULL)
 }
 
 #' @title Log Summary Statistics
-#' @description Logs complete summary statistics including timing and results
-#' @param timing_data List containing all timing information
+#' @description Logs results summary for the synthetic dataset generation
 #' @param simulation_data List containing all simulation data
 #' @param config Configuration parameters
 #' @return NULL (invisibly)
-log_summary_stats <- function(timing_data, simulation_data, config) {
-  # Calculate summary statistics
+log_summary_stats <- function(simulation_data, config) {
   stats <- calc_summary_stats(simulation_data, config)
 
-  # Log summary
-  cat("\n=== FINAL SUMMARY ===\n")
-
-  # Log timing summary
-  cat("Timing Summary:\n")
-  log_timing("Data Loading", timing_data$data_loading)
-  log_timing("Simulation Generation", timing_data$sims_gen)
-  log_timing("Read Count Generation", timing_data$read_count_gen)
-  log_timing("Validity Filtering", timing_data$validity_filtering)
-  log_timing("Diversity Selection", timing_data$diversity_selection)
-  log_timing("Output Generation", timing_data$output_gen)
-  cat(
-    "  Total Script Time:", round(timing_data$total, 2), "seconds\n\n"
+  cli::cli_h2("Results Summary")
+  cli::cli_alert_info(
+    "  Simulations generated: {stats$total_sims_generated}"
+  )
+  cli::cli_alert_info(
+    "  Valid simulations (after filtering): {stats$total_valid_sims}"
+  )
+  cli::cli_alert_info(
+    "  Excluded simulations: {stats$total_excluded_sims}"
+  )
+  cli::cli_alert_info(
+    "  Picked simulations: {stats$total_picked_sims}"
   )
 
-  # Log results summary
-  cat("Results Summary:\n")
-  cat("  Simulations generated:", stats$total_sims_generated, "\n")
-  cat("  Valid simulations (after filtering):", stats$total_valid_sims, "\n")
-  cat("  Excluded simulations:", stats$total_excluded_sims, "\n")
-  cat("  Picked simulations:", stats$total_picked_sims, "\n")
-
-  # Log breakdown
   log_valid_sims_breakdown(stats$valid_sims_per_combination)
 
-  cat("  Output files generated:", stats$n_output_files, "\n")
+  cli::cli_alert_info("  Output files generated: {stats$n_output_files}")
   if (!config$no_plots) {
-    cat("    (including visualization plots)\n")
+    cli::cli_alert_info("    (including visualization plots)")
   } else {
-    cat("    (plots disabled)\n")
+    cli::cli_alert_info("    (plots disabled)")
   }
-  cat("\n")
-
-  cat("Output files saved in:", config$output_dir, "\n")
+  cli::cli_alert_info("Output files saved in: {config$output_dir}")
 
   invisible(NULL)
 }
 
-# =============================================================================
+# ============================================================================
 # MAIN EXECUTION
-# =============================================================================
-
-#' Get current timestamp for logging
-#' @title Get Timestamp
-#' @description Returns formatted timestamp for logging
-#' @return Formatted timestamp string
-get_timestamp <- function() {
-  format(Sys.time(), "[%H:%M:%S]")
-}
-
-#' Log timing information
-#' @title Log Timing
-#' @description Logs formatted timing information for summary section
-#' @param phase_name Name of the phase
-#' @param elapsed_time Elapsed time in seconds
-log_timing <- function(phase_name, elapsed_time) {
-  cat("  ", phase_name, ": ", round(elapsed_time, 2), " seconds\n", sep = "")
-}
+# ============================================================================
 
 #' Main function to run the synthetic dataset generation pipeline
 #' @title Main Pipeline Execution
-#' @description Orchestrates the complete synthetic dataset generation pipeline
-#' with timing and progress reporting
+#' @description Orchestrates the complete pipeline with CLI progress reporting
 #' @return NULL (invisibly)
 main <- function() {
-  # Initialize timing
-  script_start_time <- Sys.time()
-  timing_data <- list() # Initialize empty timing data
+  cli::cli_h1("Synthetic Dataset Generator")
+  cli::cli_alert_info("Script started at: {format(Sys.time())}")
 
-  cat("=== Synthetic Dataset Generator ===\n")
-  cat("Script started at:", format(script_start_time), "\n\n")
-
-  # Parse command line arguments
   opt <- parse_cli_arguments()
-
-  # Initialize configuration
   config <- initialize_configuration(opt)
 
-  cat("Configuration:\n")
-  cat("- Simulations per ecology state:", config$n_sims_per_ecology_state, "\n")
-  cat(
-    "- Simulations per diversity level:",
-    config$n_sims_per_diversity_level, "\n"
+  cli::cli_h2("Configuration:")
+  cli::cli_alert_info(
+    "- Simulations per ecology state: {config$n_sims_per_ecology_state}"
   )
-  cat("- Output directory:", config$output_dir, "\n\n")
+  cli::cli_alert_info(
+    "- Simulations per diversity level: {config$n_sims_per_diversity_level}"
+  )
+  cli::cli_alert_info("- Output directory: {config$output_dir}")
+
+  cli::cli_h2("Execution:")
 
   # Phase 1: Data Loading
-  data_loading_start <- Sys.time()
-  cat(get_timestamp(), "(1/6) Loading data...\n")
-
-  run_organism_map <- load_organism_mapping(config)
-
-  available_reads <- load_available_reads(config, run_organism_map)
-
-  timing_data$data_loading <- as.numeric(
-    difftime(Sys.time(), data_loading_start, units = "secs")
+  cli::cli_alert_info("(1/6) Started loading data.")
+  cli::cli_progress_step(
+    msg = "(1/6) Loading data...",
+    msg_done = "(1/6) Loaded data.",
+    msg_failed = "(1/6) Failed to load data.",
+    spinner = TRUE
   )
+  run_organism_map <- load_organism_mapping(config)
+  available_reads <- load_available_reads(config, run_organism_map)
+  cli::cli_progress_done()
 
   # Phase 2: Simulations Generation
-  sims_gen_start <- Sys.time()
-  cat(
-    get_timestamp(),
-    "(2/6) Generating simulation specifications based on abundance data...\n"
+  cli::cli_alert_info("(2/6) Started generating simulation specifications.")
+  cli::cli_progress_step(
+    msg = "(2/6) Generating simulation specifications...",
+    msg_done = "(2/6) Generated simulation specifications.",
+    msg_failed = "(2/6) Failed to generate simulation specifications.",
+    spinner = TRUE
   )
-
   sims_specs <- gen_sim_specs(config, run_organism_map)
-
   if (!config$no_plots) {
-    # Generate individual simulation plots
     gen_individual_plots(sims_specs, config$output_dir)
-
-    # Generate diversity plot (showing all simulations)
     gen_diversity_plot(sims_specs, config$output_dir)
   }
-
-  timing_data$sims_gen <- as.numeric(
-    difftime(Sys.time(), sims_gen_start, units = "secs")
-  )
+  cli::cli_progress_done()
 
   # Phase 3: Read Count Generation
-  read_count_gen_start <- Sys.time()
-  cat(
-    get_timestamp(),
-    "(3/6) Generating read counts for different sampling depths...\n"
+  cli::cli_alert_info("(3/6) Started generating read counts.")
+  cli::cli_progress_step(
+    msg = "(3/6) Generating read counts...",
+    msg_done = "(3/6) Generated read counts.",
+    msg_failed = "(3/6) Failed to generate read counts.",
+    spinner = TRUE
   )
-
   sims_specs_with_reads <- gen_read_counts(
-    sims_specs, config$sampling_depths
+    sims_specs,
+    config$sampling_depths
   )
-
-  timing_data$read_count_gen <- as.numeric(
-    difftime(Sys.time(), read_count_gen_start, units = "secs")
-  )
+  cli::cli_progress_done()
 
   # Phase 4: Validity Filtering
-  validity_filtering_start <- Sys.time()
-  cat(get_timestamp(), "(4/6) Filtering valid simulations...\n")
-
+  cli::cli_alert_info("(4/6) Started filtering valid simulations.")
+  cli::cli_progress_step(
+    msg = "(4/6) Filtering valid simulations...",
+    msg_done = "(4/6) Filtered valid simulations.",
+    msg_failed = "(4/6) Failed to filter valid simulations.",
+    spinner = TRUE
+  )
   sims_specs_valid <- filter_valid_sims(
-    sims_specs_with_reads, run_organism_map, available_reads
+    sims_specs_with_reads,
+    run_organism_map,
+    available_reads
   )
-
-  timing_data$validity_filtering <- as.numeric(
-    difftime(Sys.time(), validity_filtering_start, units = "secs")
-  )
+  cli::cli_progress_done()
 
   # Phase 5: Diversity Selection
-  diversity_selection_start <- Sys.time()
-  cat(get_timestamp(), "(5/6) Selecting simulations by diversity levels...\n")
-
+  cli::cli_alert_info(
+    "(5/6) Started selecting simulations by diversity levels."
+  )
+  cli::cli_progress_step(
+    msg = "(5/6) Selecting simulations by diversity levels...",
+    msg_done = "(5/6) Selected simulations by diversity levels.",
+    msg_failed = "(5/6) Failed to select simulations by diversity levels.",
+    spinner = TRUE
+  )
   sims_specs_pick <- select_sims_by_diversity(
-    sims_specs_valid, config$n_sims_per_diversity_level
+    sims_specs_valid,
+    config$n_sims_per_diversity_level
   )
-
-  timing_data$diversity_selection <- as.numeric(
-    difftime(Sys.time(), diversity_selection_start, units = "secs")
-  )
+  cli::cli_progress_done()
 
   # Phase 6: Output Generation
-  output_gen_start <- Sys.time()
-  cat(get_timestamp(), "(6/6) Generating output files...\n")
-
+  cli::cli_alert_info("(6/6) Started generating output files.")
+  cli::cli_progress_step(
+    msg = "(6/6) Generating output files...",
+    msg_done = "(6/6) Generated output files.",
+    msg_failed = "(6/6) Failed to generate output files.",
+    spinner = TRUE
+  )
   if (!config$no_plots) {
     gen_summary_plot(sims_specs_pick, config$output_dir)
   }
-
   write_sim_specs(sims_specs_pick, config$output_dir)
-
   gen_subsampling_comms(
-    sims_specs_pick, config$sampling_depths, config$output_dir
+    sims_specs_pick,
+    config$sampling_depths,
+    config$output_dir
   )
+  cli::cli_progress_done()
 
-  timing_data$output_gen <- as.numeric(
-    difftime(Sys.time(), output_gen_start, units = "secs")
-  )
-
-  # Calculate total time
-  timing_data$total <- as.numeric(
-    difftime(Sys.time(), script_start_time, units = "secs")
-  )
-
-  # Collect simulation data
   simulation_data <- list(
     sims_specs_with_reads = sims_specs_with_reads,
     sims_specs_valid = sims_specs_valid,
     sims_specs_pick = sims_specs_pick,
     run_organism_map = run_organism_map
   )
+  log_summary_stats(simulation_data, config)
 
-  # Log summary statistics
-  log_summary_stats(timing_data, simulation_data, config)
-
+  cli::cli_alert_success("Synthetic dataset generation complete.")
   invisible(NULL)
 }
 

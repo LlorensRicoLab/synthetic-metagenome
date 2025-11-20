@@ -753,15 +753,14 @@ select_sims_by_diversity <- function(
     ) %>%
     dplyr::distinct()
 
-  # Select up to N_SIMS_PER_DIVERSITY_LEVEL valid simulations
-  # per combination of sampling depth and diversity level.
-  print(sims_diversity)
+  # Identify the maximum sampling depth available
+  max_sampling_depth <- max(sims_diversity$sampling_depth)
 
-
-  sims_diversity <- sims_diversity %>%
-    dplyr::group_by(
-      dplyr::across(c("sampling_depth", "diversity_level"))
-    ) %>%
+  # Select simulations at the highest sampling depth first,
+  # ensuring they satisfy the most demanding read requirements.
+  sims_from_max_depth <- sims_diversity %>%
+    dplyr::filter(.data$sampling_depth == max_sampling_depth) %>%
+    dplyr::group_by(dplyr::across("diversity_level")) %>%
     dplyr::slice_min(
       order_by = dplyr::pick(dplyr::all_of(c("sim_number", "diversity"))),
       n = n_sims_per_diversity_level,
@@ -772,34 +771,46 @@ select_sims_by_diversity <- function(
     ) %>%
     dplyr::ungroup()
 
-  # Keep only N_SIMS_PER_DIVERSITY_LEVEL simulations
-  # per combination of sampling depth and diversity level.
+  # Expand the selected simulations to include all sampling depths
+  # using the same sim_num for each diversity_id across all depths
+  sims_diversity_expanded <- sims_from_max_depth %>%
+    dplyr::select(
+      dplyr::all_of(
+        c("eco_state", "sim_number", "diversity_level", "diversity_id")
+      )
+    ) %>%
+    tidyr::crossing(
+      sampling_depth = unique(sims_diversity$sampling_depth)
+    )
+
+  # Keep only the simulations matching the selected sim_number across depths.
   sims_specs_pick <- sims_specs_valid %>%
     dplyr::inner_join(
-      sims_diversity,
+      sims_diversity_expanded,
       by = c(
         "eco_state",
         "sim_number",
-        "diversity",
         "diversity_level",
         "sampling_depth"
       )
     )
 
-  # Report if we have insufficient valid simulations
-  # for some combinations of sampling depth and diversity level.
-  insufficient_sims <- sims_specs_pick %>%
-    dplyr::group_by(
-      dplyr::across(c("sampling_depth", "diversity_level"))
-    ) %>%
+  # Report if some diversity levels lack enough valid simulations
+  # at the highest sampling depth.
+  insufficient_sims <- sims_from_max_depth %>%
+    dplyr::group_by(dplyr::across("diversity_level")) %>%
     dplyr::summarize(
-      n_valid = dplyr::n_distinct(.data$diversity_id), .groups = "drop"
+      n_valid = dplyr::n_distinct(.data$diversity_id),
+      .groups = "drop"
     ) %>%
     dplyr::filter(.data$n_valid < n_sims_per_diversity_level)
 
   if (nrow(insufficient_sims) > 0) {
     cli::cli_alert_warning(
-      "Insufficient valid simulations for some combinations of depth/level"
+      paste0(
+        "Insufficient valid simulations for some diversity levels ",
+        "at highest depth"
+      )
     )
   }
 

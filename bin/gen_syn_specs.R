@@ -31,6 +31,8 @@ suppressPackageStartupMessages({
   library(furrr)
   library(vegan)
   library(stringr)
+  library(grid)
+  library(khroma)
   library(cli)
   library(rlang)
 })
@@ -196,7 +198,9 @@ get_abundance_data <- function(abundance_dir) {
 
     # Validate eco_state extraction
     if (is.na(eco_state) || eco_state == "") {
-      warning(paste("Could not extract eco_state from filename:", filename))
+      cli::cli_alert_warning(
+        "Could not extract eco_state from filename: {filename}"
+      )
     }
 
     list(abundance = abundance, eco_state = eco_state)
@@ -329,7 +333,8 @@ is_cache_valid <- function(cache_file, run_accessions) {
 #' @return List of file pairs
 #' (each pair contains forward and reverse file paths)
 get_changed_file_pairs <- function(
-    cache_file, run_accessions, source_fastq_dir) {
+  cache_file, run_accessions, source_fastq_dir
+) {
   if (!file.exists(cache_file)) {
     # If the cache file does not exist, return file pairs for all runs
     # since we don't have any information about the files and its content.
@@ -677,7 +682,8 @@ gen_read_counts <- function(sims_specs, sampling_depths) {
 #' @param available_reads Available reads data
 #' @return List with valid simulations and validity information
 filter_valid_sims <- function(
-    sims_specs_with_reads, run_organism_map, available_reads) {
+  sims_specs_with_reads, run_organism_map, available_reads
+) {
   # Add run_accession and available_reads to the simulation specifications.
   sims_specs_with_reads <- sims_specs_with_reads %>%
     dplyr::left_join(run_organism_map, by = "organism") %>%
@@ -742,8 +748,9 @@ filter_valid_sims <- function(
 #' @param n_sims_per_diversity_level Number of simulations per diversity level
 #' @return Data frame with selected simulations
 select_sims_by_diversity <- function(
-    sims_specs_valid,
-    n_sims_per_diversity_level) {
+  sims_specs_valid,
+  n_sims_per_diversity_level
+) {
   sims_diversity <- sims_specs_valid %>%
     dplyr::select(
       dplyr::all_of(c(
@@ -818,6 +825,23 @@ select_sims_by_diversity <- function(
 }
 
 # ============================================================================
+# COLOR UTILITIES
+# ============================================================================
+
+#' @title Create Colorblind-Friendly Organism Color Mapping
+#' @description Creates a colorblind-friendly palette for organisms
+#' using khroma's smooth rainbow palette with range c(0.25, 1)
+#' @param organisms Vector of organism names
+#' @return Named vector of colors keyed by organism
+create_organism_color_mapping <- function(organisms) {
+  unique_organisms <- sort(unique(organisms))
+  palette_fn <- khroma::color("smooth rainbow")
+  colors <- palette_fn(length(unique_organisms), range = c(0.25, 1))
+  names(colors) <- unique_organisms
+  colors
+}
+
+# ============================================================================
 # OUTPUT GENERATION
 # ============================================================================
 
@@ -827,6 +851,86 @@ select_sims_by_diversity <- function(
 #' @param sims_specs Simulation specifications
 #' @param output_dir Output directory
 gen_individual_plots <- function(sims_specs, output_dir) {
+  specs_dir <- file.path(output_dir, "plots", "specs")
+  if (!dir.exists(specs_dir)) {
+    dir.create(specs_dir, recursive = TRUE)
+  }
+
+  # Load SGB mapping for species labels
+  mash_top_hits_file <- here("data", "mapping", "mash.tsv")
+  if (!file.exists(mash_top_hits_file)) {
+    cli::cli_abort(
+      c(
+        "!" = "SGB mapping file not found: {mash_top_hits_file}",
+        "i" = "Run mash_top_hits_summary.R to generate this file."
+      )
+    )
+  }
+
+  sgb_mapping <- readr::read_tsv(
+    mash_top_hits_file,
+    show_col_types = FALSE
+  ) %>%
+    dplyr::select(
+      dplyr::all_of(c("run_accession", "organism", "sgb_id"))
+    )
+
+  # Create consistent color mapping for all organisms
+  organism_colors <- create_organism_color_mapping(sims_specs$organism)
+
+  # Create species label lookup (same logic as gen_community_profile_plots)
+  # Check if run_accession exists in the data
+  has_run_accession <- "run_accession" %in% names(sims_specs)
+
+  if (has_run_accession) {
+    organism_sgb_map <- sims_specs %>%
+      dplyr::select(
+        dplyr::all_of(c("organism", "run_accession"))
+      ) %>%
+      dplyr::distinct() %>%
+      dplyr::left_join(
+        sgb_mapping,
+        by = c("run_accession", "organism")
+      )
+  } else {
+    # If run_accession is not available, join only on organism
+    organism_sgb_map <- sims_specs %>%
+      dplyr::select(
+        dplyr::all_of("organism")
+      ) %>%
+      dplyr::distinct() %>%
+      dplyr::left_join(
+        sgb_mapping %>%
+          dplyr::select(dplyr::all_of(c("organism", "sgb_id"))) %>%
+          dplyr::distinct(),
+        by = "organism"
+      )
+  }
+
+  organism_sgb_map <- organism_sgb_map %>%
+    dplyr::mutate(
+      species_only = stringr::str_replace(
+        .data$organism,
+        "^([A-Za-z][A-Za-z-]+\\s+[a-z][a-z-]+).*",
+        "\\1"
+      ),
+      formatted_label = dplyr::case_when(
+        !is.na(.data$sgb_id) & .data$sgb_id != "NA" ~ paste0(
+          "s__", .data$species_only, ".t__", .data$sgb_id
+        ),
+        TRUE ~ paste0("s__", .data$species_only)
+      )
+    ) %>%
+    dplyr::select(
+      dplyr::all_of(c("organism", "formatted_label"))
+    )
+
+  species_label_lookup <- organism_sgb_map %>%
+    dplyr::group_by(dplyr::across("organism")) %>%
+    dplyr::slice_head(n = 1) %>%
+    dplyr::ungroup() %>%
+    tibble::deframe()
+
   # Split data into groups for parallel processing
   plot_groups <- sims_specs %>%
     dplyr::group_by(
@@ -834,49 +938,280 @@ gen_individual_plots <- function(sims_specs, output_dir) {
     ) %>%
     dplyr::group_split()
 
-  # Generate individual specification plots in parallel.
+  # Generate individual specification plots sequentially.
   # Each plot shows relative abundance by organism.
-  furrr::future_walk(plot_groups, function(sim_data) {
+  # Using sequential processing
+  # to avoid MultisessionFuture graphics device warnings
+  purrr::walk(plot_groups, function(sim_data) {
     eco_state <- sim_data$eco_state[1]
     sim_num <- sim_data$sim_number[1]
     diversity_level <- sim_data$diversity_level[1]
 
+    # Filter to one sampling depth
+    # (relative abundance is the same across depths)
+    # Use minimum depth to ensure we have data
+    plot_data <- sim_data %>%
+      dplyr::filter(.data$sampling_depth == min(.data$sampling_depth))
+
     plot <- ggplot2::ggplot(
-      sim_data,
+      plot_data,
       ggplot2::aes(x = 1, y = .data$rel_abundance, fill = .data$organism)
     ) +
-      ggplot2::geom_bar(stat = "identity", color = "black") +
+      ggplot2::geom_bar(
+        stat = "identity",
+        color = "black",
+        linewidth = 0.1,
+        width = 0.002
+      ) +
+      ggplot2::scale_fill_manual(
+        values = organism_colors,
+        breaks = names(species_label_lookup),
+        labels = species_label_lookup,
+        name = "Species"
+      ) +
+      ggplot2::scale_x_continuous(
+        limits = c(0.998, 1.002),
+        expand = ggplot2::expansion(mult = 0, add = 0.0005)
+      ) +
+      ggplot2::scale_y_continuous(
+        expand = ggplot2::expansion(mult = c(0.05, 0.05))
+      ) +
       ggplot2::theme_bw() +
       ggplot2::theme(
         axis.text.x = ggplot2::element_blank(),
         axis.ticks.x = ggplot2::element_blank(),
         axis.line.x = ggplot2::element_blank(),
         plot.title = ggplot2::element_text(hjust = 0.5),
-        plot.margin = ggplot2::margin(0.2, 0.2, 0.2, 0.25, "cm")
+        legend.text = ggplot2::element_text(face = "italic"),
+        legend.title = ggplot2::element_text(face = "bold"),
+        panel.grid = ggplot2::element_blank(),
+        plot.margin = ggplot2::margin(10, 5, 10, 5)
       ) +
       ggplot2::labs(
         title = stringr::str_to_title(
           paste0(eco_state, " #", sim_num, " - ", diversity_level, " Diversity")
         ),
         x = NULL,
-        y = "Relative Abundance",
-        fill = "Organism"
+        y = "Relative Abundance"
       )
+
+    legend <- ggpubr::get_legend(plot)
+    plot_no_legend <- plot + ggplot2::theme(legend.position = "none")
+    stacked_plot <- ggpubr::ggarrange(
+      plot_no_legend,
+      ggpubr::as_ggplot(legend),
+      ncol = 2,
+      widths = c(0.25, 0.75)
+    )
 
     ggplot2::ggsave(
       file.path(
-        output_dir,
-        "plots",
+        specs_dir,
         paste0(
           stringr::str_to_lower(eco_state), "_",
           sprintf("%03d", sim_num), "_",
           diversity_level, "_diversity_specs.pdf"
         )
       ),
+      plot = stacked_plot,
+      device = "pdf",
+      height = 20,
+      width = 22,
+      units = "cm"
+    )
+  })
+}
+
+#' @title Generate Community Profile Plots
+#' @description Creates stacked bar plots showing absolute abundances
+#' across sampling depths for each simulation number
+#' @param sims_specs_pick Picked simulation specifications
+#' @param output_dir Output directory
+gen_community_profile_plots <- function(sims_specs_pick, output_dir) {
+  communities_dir <- file.path(output_dir, "plots", "communities")
+  if (!dir.exists(communities_dir)) {
+    dir.create(communities_dir, recursive = TRUE)
+  }
+
+  mash_top_hits_file <- here("data", "mapping", "mash.tsv")
+  if (!file.exists(mash_top_hits_file)) {
+    cli::cli_abort(
+      c(
+        "!" = "SGB mapping file not found: {mash_top_hits_file}",
+        "i" = "Run mash_top_hits_summary.R to generate this file."
+      )
+    )
+  }
+
+  sgb_mapping <- readr::read_tsv(
+    mash_top_hits_file,
+    show_col_types = FALSE
+  ) %>%
+    dplyr::select(
+      dplyr::all_of(c("run_accession", "organism", "sgb_id"))
+    )
+
+  sims_specs_pick <- sims_specs_pick %>%
+    dplyr::mutate(
+      sim_number_final = as.integer(
+        stringr::str_extract(.data$diversity_id, "[0-9]+$")
+      )
+    )
+
+  organism_colors <- create_organism_color_mapping(sims_specs_pick$organism)
+
+  organism_sgb_map <- sims_specs_pick %>%
+    dplyr::select(
+      dplyr::all_of(c("organism", "run_accession"))
+    ) %>%
+    dplyr::distinct() %>%
+    dplyr::left_join(
+      sgb_mapping,
+      by = c("run_accession", "organism")
+    ) %>%
+    dplyr::mutate(
+      species_only = stringr::str_replace(
+        .data$organism,
+        "^([A-Za-z][A-Za-z-]+\\s+[a-z][a-z-]+).*",
+        "\\1"
+      ),
+      formatted_label = dplyr::case_when(
+        !is.na(.data$sgb_id) & .data$sgb_id != "NA" ~ paste0(
+          "s__", .data$species_only, ".t__", .data$sgb_id
+        ),
+        TRUE ~ paste0("s__", .data$species_only)
+      )
+    ) %>%
+    dplyr::select(
+      dplyr::all_of(c("organism", "formatted_label"))
+    )
+
+  species_label_lookup <- organism_sgb_map %>%
+    dplyr::group_by(dplyr::across("organism")) %>%
+    dplyr::slice_head(n = 1) %>%
+    dplyr::ungroup() %>%
+    tibble::deframe()
+
+  unique_sim_numbers <- sort(unique(sims_specs_pick$sim_number_final))
+  purrr::walk(unique_sim_numbers, function(sim_num_final) {
+    sim_data <- sims_specs_pick %>%
+      dplyr::filter(.data$sim_number_final == sim_num_final) %>%
+      dplyr::mutate(
+        sampling_depth_label = dplyr::case_when(
+          .data$sampling_depth == 1e4 ~ "10K",
+          .data$sampling_depth == 1e5 ~ "100K",
+          .data$sampling_depth == 1e6 ~ "1M",
+          .data$sampling_depth == 1e7 ~ "10M",
+          TRUE ~ format(.data$sampling_depth, scientific = TRUE)
+        ),
+        sampling_depth_label = factor(
+          .data$sampling_depth_label,
+          levels = c("10K", "100K", "1M", "10M")
+        ),
+        diversity_level_label = dplyr::case_when(
+          .data$diversity_level == "low" ~ "Low diversity",
+          .data$diversity_level == "mid" ~ "Moderate diversity",
+          TRUE ~ "High diversity"
+        ),
+        diversity_level_label = factor(
+          .data$diversity_level_label,
+          levels = c("Low diversity", "Moderate diversity", "High diversity")
+        )
+      )
+
+    max_reads <- max(sim_data$num_reads_per_organism, na.rm = TRUE)
+    if (!is.finite(max_reads) || max_reads == 0) {
+      max_reads <- 1
+    }
+
+    plot <- ggplot2::ggplot(
+      sim_data,
+      ggplot2::aes(
+        x = .data$sampling_depth_label,
+        y = .data$num_reads_per_organism
+      )
+    ) +
+      ggplot2::geom_bar(
+        ggplot2::aes(fill = .data$organism),
+        stat = "identity",
+        color = "black",
+        linewidth = 0.1
+      ) +
+      ggplot2::facet_wrap(~diversity_level_label, ncol = 3) +
+      ggplot2::scale_y_continuous(
+        labels = scales::label_number(scale = 1e-6, suffix = "M"),
+        expand = ggplot2::expansion(mult = c(0, 0))
+      ) +
+      ggplot2::scale_fill_manual(
+        values = organism_colors,
+        breaks = names(species_label_lookup),
+        labels = species_label_lookup,
+        name = "Species"
+      ) +
+      ggplot2::coord_cartesian(
+        ylim = c(-0.1 * max_reads, max_reads * 1.05)
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        axis.title = ggplot2::element_text(face = "bold"),
+        legend.text = ggplot2::element_text(face = "italic"),
+        legend.title = ggplot2::element_text(face = "bold"),
+        plot.title = ggplot2::element_text(hjust = 0.5),
+        strip.text = ggplot2::element_text(face = "bold"),
+        strip.background = ggplot2::element_rect(fill = "white"),
+        panel.grid = ggplot2::element_blank(),
+        plot.margin = ggplot2::margin(20, 20, 20, 20)
+      ) +
+      ggplot2::labs(
+        title = paste(
+          "Simulation", sim_num_final,
+          "- Microbial Community Profiles"
+        ),
+        x = "Sampling depth (reads)",
+        y = "Absolute abundance (reads)"
+      ) +
+      ggplot2::annotate(
+        "segment",
+        x = 0.8, xend = 4.2,
+        y = -0.05 * max_reads,
+        yend = -0.05 * max_reads,
+        arrow = ggplot2::arrow(
+          length = grid::unit(0.1, "inches"),
+          ends = "both"
+        ),
+        color = "black",
+        linewidth = 0.6
+      ) +
+      ggplot2::annotate(
+        "text",
+        x = 0.8,
+        y = -0.08 * max_reads,
+        label = "Biopsy",
+        hjust = 0,
+        vjust = 0.5,
+        fontface = "bold",
+        size = 3.5
+      ) +
+      ggplot2::annotate(
+        "text",
+        x = 4.2,
+        y = -0.08 * max_reads,
+        label = "Fecal",
+        hjust = 1,
+        vjust = 0.5,
+        fontface = "bold",
+        size = 3.5
+      )
+
+    ggplot2::ggsave(
+      file.path(
+        communities_dir,
+        sprintf("sim_%03d_community_profiles.pdf", sim_num_final)
+      ),
       plot = plot,
       device = "pdf",
-      height = 15,
-      width = 20,
+      height = 20,
+      width = 30,
       units = "cm"
     )
   })
@@ -887,53 +1222,69 @@ gen_individual_plots <- function(sims_specs, output_dir) {
 #' @param sims_specs Simulation specifications
 #' @param output_dir Output directory
 gen_diversity_plot <- function(sims_specs, output_dir) {
+  summary_dir <- file.path(output_dir, "plots", "summary")
+  if (!dir.exists(summary_dir)) {
+    dir.create(summary_dir, recursive = TRUE)
+  }
+
   # Create diversity plot data using already-calculated diversity levels
   plot_diversity <- sims_specs %>%
     dplyr::select(
       dplyr::all_of(
-        c("eco_state", "sim_number", "diversity", "diversity_level")
+        c(
+          "eco_state",
+          "sim_number",
+          "diversity",
+          "diversity_level",
+          "diversity_id"
+        )
       )
     ) %>%
     dplyr::distinct() %>%
     dplyr::mutate(
       eco_id = paste(.data$eco_state, .data$sim_number, sep = "_")
     ) %>%
-    dplyr::arrange(.data$diversity)
+    dplyr::arrange(
+      factor(.data$diversity_level, levels = c("low", "mid", "high")),
+      readr::parse_number(.data$diversity_id)
+    )
 
   # Order samples for plotting
-  plot_diversity$eco_id <- factor(
-    plot_diversity$eco_id,
-    levels = plot_diversity$eco_id
+  plot_diversity$diversity_id <- factor(
+    plot_diversity$diversity_id,
+    levels = plot_diversity$diversity_id
   )
 
   # Create a diversity plot showing diversity values for all simulations.
   plot <- ggplot2::ggplot(
     plot_diversity,
     ggplot2::aes(
-      x = .data$eco_id, y = .data$diversity, fill = .data$diversity_level
+      x = .data$diversity_id,
+      y = .data$diversity,
+      fill = .data$diversity_level
     )
   ) +
     ggplot2::geom_bar(stat = "identity") +
     ggplot2::scale_fill_manual(
       values = c("low" = "red", "mid" = "yellow", "high" = "green"),
-      name = "Diversity Level"
+      labels = c("low" = "Low", "mid" = "Moderate", "high" = "High"),
+      name = "Diversity level"
     ) +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(angle = 0, hjust = 0.5, vjust = 0.5),
       plot.title = ggplot2::element_text(hjust = 0.5)
     ) +
     ggplot2::labs(
-      title = "Diversity Distribution Across All Simulations",
+      title = "Diversity Distribution across all Simulations",
       x = "Simulations",
       y = "Simpson's Diversity Index"
     ) +
-    ggplot2::scale_y_continuous(limits = c(0, 1)) +
+    ggplot2::coord_cartesian(ylim = c(0, 1)) +
     ggplot2::geom_hline(yintercept = c(0.5, 0.75))
 
   ggplot2::ggsave(
-    file.path(output_dir, "plots", "sims_diversity_distribution.pdf"),
+    file.path(summary_dir, "sims_diversity_distribution.pdf"),
     plot = plot,
     device = "pdf",
     height = 15,
@@ -948,7 +1299,64 @@ gen_diversity_plot <- function(sims_specs, output_dir) {
 #' @param sims_specs_pick Picked simulation specifications
 #' @param output_dir Output directory
 gen_summary_plot <- function(sims_specs_pick, output_dir) {
-  sims_specs_pick %>%
+  summary_dir <- file.path(output_dir, "plots", "summary")
+  if (!dir.exists(summary_dir)) {
+    dir.create(summary_dir, recursive = TRUE)
+  }
+
+  mash_top_hits_file <- here("data", "mapping", "mash.tsv")
+  if (!file.exists(mash_top_hits_file)) {
+    cli::cli_abort(
+      c(
+        "!" = "SGB mapping file not found: {mash_top_hits_file}",
+        "i" = "Run mash_top_hits_summary.R to generate this file."
+      )
+    )
+  }
+
+  sgb_mapping <- readr::read_tsv(
+    mash_top_hits_file,
+    show_col_types = FALSE
+  ) %>%
+    dplyr::select(
+      dplyr::all_of(c("run_accession", "organism", "sgb_id"))
+    )
+
+  organism_colors <- create_organism_color_mapping(sims_specs_pick$organism)
+
+  organism_sgb_map <- sims_specs_pick %>%
+    dplyr::select(
+      dplyr::all_of(c("organism", "run_accession"))
+    ) %>%
+    dplyr::distinct() %>%
+    dplyr::left_join(
+      sgb_mapping,
+      by = c("run_accession", "organism")
+    ) %>%
+    dplyr::mutate(
+      species_only = stringr::str_replace(
+        .data$organism,
+        "^([A-Za-z][A-Za-z-]+\\s+[a-z][a-z-]+).*",
+        "\\1"
+      ),
+      formatted_label = dplyr::case_when(
+        !is.na(.data$sgb_id) & .data$sgb_id != "NA" ~ paste0(
+          "s__", .data$species_only, ".t__", .data$sgb_id
+        ),
+        TRUE ~ paste0("s__", .data$species_only)
+      )
+    ) %>%
+    dplyr::select(
+      dplyr::all_of(c("organism", "formatted_label"))
+    )
+
+  species_label_lookup <- organism_sgb_map %>%
+    dplyr::group_by(dplyr::across("organism")) %>%
+    dplyr::slice_head(n = 1) %>%
+    dplyr::ungroup() %>%
+    tibble::deframe()
+
+  plot <- sims_specs_pick %>%
     dplyr::group_by(dplyr::across("diversity_id")) %>%
     dplyr::mutate(diversity_id = factor(.data$diversity_id, levels = c(
       "low_1", "low_2", "low_3", "low_4", "low_5",
@@ -957,6 +1365,12 @@ gen_summary_plot <- function(sims_specs_pick, output_dir) {
     ))) %>%
     ggpubr::ggbarplot(
       x = "diversity_id", y = "rel_abundance", fill = "organism"
+    ) +
+    ggplot2::scale_fill_manual(
+      values = organism_colors,
+      breaks = names(species_label_lookup),
+      labels = species_label_lookup,
+      name = "Species"
     ) +
     ggplot2::theme_bw() +
     ggplot2::theme(
@@ -971,7 +1385,8 @@ gen_summary_plot <- function(sims_specs_pick, output_dir) {
     )
 
   ggplot2::ggsave(
-    file.path(output_dir, "plots", "sims_picked_specs.pdf"),
+    file.path(summary_dir, "sims_picked_specs.pdf"),
+    plot = plot,
     device = "pdf",
     height = 15,
     width = 35,
@@ -997,9 +1412,10 @@ write_sim_specs <- function(sims_specs_pick, output_dir) {
 #' @param sampling_depths Vector of sampling depths
 #' @param output_dir Output directory
 gen_subsampling_comms <- function(
-    sims_specs_pick,
-    sampling_depths,
-    output_dir) {
+  sims_specs_pick,
+  sampling_depths,
+  output_dir
+) {
   seqkit_subsampling_specs <- purrr::map_dfr(
     sampling_depths, function(sampling_depth) {
       sims_specs_to_subsample <- sims_specs_pick %>%
@@ -1093,8 +1509,9 @@ gen_subsampling_comms <- function(
 #' @param sims_specs_with_reads Simulation specifications with read counts
 #' @return Data frame with counts per combination
 count_valid_sims_per_combo <- function(
-    sims_specs_valid,
-    sims_specs_with_reads) {
+  sims_specs_valid,
+  sims_specs_with_reads
+) {
   sims_specs_valid %>%
     dplyr::distinct(
       dplyr::across(
@@ -1273,10 +1690,6 @@ main <- function() {
     spinner = TRUE
   )
   sims_specs <- gen_sim_specs(config, run_organism_map)
-  if (!config$no_plots) {
-    gen_individual_plots(sims_specs, config$output_dir)
-    gen_diversity_plot(sims_specs, config$output_dir)
-  }
   cli::cli_progress_done()
 
   # Phase 3: Read Count Generation
@@ -1333,7 +1746,10 @@ main <- function() {
     spinner = TRUE
   )
   if (!config$no_plots) {
+    gen_individual_plots(sims_specs_pick, config$output_dir)
+    gen_diversity_plot(sims_specs_pick, config$output_dir)
     gen_summary_plot(sims_specs_pick, config$output_dir)
+    gen_community_profile_plots(sims_specs_pick, config$output_dir)
   }
   write_sim_specs(sims_specs_pick, config$output_dir)
   gen_subsampling_comms(
@@ -1352,6 +1768,7 @@ main <- function() {
   log_summary_stats(simulation_data, config)
 
   cli::cli_alert_success("Synthetic dataset generation complete.")
+
   invisible(NULL)
 }
 

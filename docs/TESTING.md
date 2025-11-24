@@ -127,14 +127,10 @@ Checks that diversity levels (low, mid, high) are correctly distributed
 Ensures the generation script produces consistent results
 
 **Expected Files:**
-- `data/synthetic/generation/syn_specs/seqkit_subsampling_specs_1e+04.txt`
-(10,000 reads)
-- `data/synthetic/generation/syn_specs/seqkit_subsampling_specs_1e+05.txt`
-(100,000 reads)
-- `data/synthetic/generation/syn_specs/seqkit_subsampling_specs_1e+06.txt`
-(1,000,000 reads)
-- `data/synthetic/generation/syn_specs/seqkit_subsampling_specs_1e+07.txt`
-(10,000,000 reads)
+- `data/syn_specs/seqkit_subsampling_specs_1e+04.txt` (10,000 reads)
+- `data/syn_specs/seqkit_subsampling_specs_1e+05.txt` (100,000 reads)
+- `data/syn_specs/seqkit_subsampling_specs_1e+06.txt` (1,000,000 reads)
+- `data/syn_specs/seqkit_subsampling_specs_1e+07.txt` (10,000,000 reads)
 
 ### `test_syn_dataset_validation.R`
 
@@ -211,15 +207,18 @@ Rscript tests/test_syn_dataset_validation.R
 
 The pre-commit hooks will automatically run tests when you commit changes:
 
+> Hooks rely on the Pixi-managed R environment. Always invoke them through
+> Pixi so they reuse `.pixi/envs/default` and skip redundant renv restores.
+
 ```bash
-# Install pre-commit hooks (one-time setup)
-pre-commit install
+# Install pre-commit hooks (one-time setup inside Pixi)
+pixi run pre-commit install
 
 # Run pre-commit hooks manually
-pre-commit run --all-files
+pixi run pre-commit run --all-files
 
-# Run specific hook
-pre-commit run test-seqkit-subsampling-specs
+# Run a specific hook
+pixi run pre-commit run test-seqkit-subsampling-specs
 ```
 
 <div id="ci-pipeline"></div>
@@ -264,7 +263,7 @@ graph LR
 - Checks for code quality issues (browser/debug statements)
 - Performs spell checking with R-specific exclusions
 - Executes comprehensive tests including SeqKit command consistency tests
-- Excludes dataset validation (requires DVC-tracked files, run locally/HPC)
+- Excludes dataset validation (requires generated files, run locally/HPC)
 
 ### Pull Request Protection
 - Prevents merging code that fails quality checks

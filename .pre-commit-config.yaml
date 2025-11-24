@@ -2,13 +2,14 @@
 # Fast, local checks that run before each commit
 
 repos:
-  # R-specific hooks from lorenzwalthert/precommit
-  - repo: https://github.com/lorenzwalthert/precommit
-    rev: v0.4.3.9011
+  - repo: local
     hooks:
-      # R code formatting (fast, local)
       - id: style-files
-        args: [--style_pkg=styler, --style_fun=tidyverse_style, --cache-root=styler-perm]
+        name: style-files
+        entry: pixi run Rscript scripts/precommit_hooks/style-files.R
+        language: system
+        pass_filenames: true
+        files: '(\.[rR]profile|\.[rR]|\.Rmd|\.rmd|\.Rnw|\.qmd)$'
         exclude: >
           (?x)^(
           tests/testthat/in/.*|
@@ -20,8 +21,12 @@ repos:
           logs/.*|
           )$
 
-      # R syntax checking (fast, local)
       - id: parsable-R
+        name: parsable-R
+        entry: pixi run Rscript scripts/precommit_hooks/parsable-R.R
+        language: system
+        pass_filenames: true
+        files: '\.[rR](md)?$'
         exclude: >
           (?x)^(
           tests/testthat/in/.*|
@@ -33,37 +38,46 @@ repos:
           logs/.*|
           )$
 
-      # R code linting (fast, local)
       - id: lintr
-        exclude: >
-          (?x)^(
-          tests/testthat/in/.*|
-          data/.*\.(csv|tsv|json|fastq|gz|txt|pdf|png|jpg|jpeg)$|
-          data/.*/cache/.*|
-          data/.*/syn_specs/.*|
-          results/.*|
-          figures/.*|
-          logs/.*|
-          )$
+        name: lintr
+        entry: pixi run Rscript scripts/precommit_hooks/lintr.R
+        language: system
+        pass_filenames: true
+        files: '(\.[rR]profile|\.R|\.Rmd|\.Rnw|\.qmd)$'
+        exclude: 'renv/activate\.R'
 
-      # Code quality checks (fast, local)
       - id: no-browser-statement
+        name: no-browser-statement
+        entry: pixi run Rscript scripts/precommit_hooks/no-browser-statement.R
+        language: system
+        pass_filenames: true
+        files: '\.[rR]$'
         exclude: >
           (?x)^(
+          scripts/precommit_hooks/.*|
           tests/testthat/in/.*|
           )$
 
       - id: no-debug-statement
+        name: no-debug-statement
+        entry: pixi run Rscript scripts/precommit_hooks/no-debug-statement.R
+        language: system
+        pass_filenames: true
+        files: '\.[rR]$'
         exclude: >
           (?x)^(
+          scripts/precommit_hooks/.*|
           tests/testthat/in/.*|
           )$
 
-      # Spell checking (with comprehensive exclusions)
       - id: spell-check
+        name: spell-check
+        entry: pixi run Rscript scripts/precommit_hooks/spell-check.R
+        language: system
+        pass_filenames: true
         exclude: >
           (?x)^(
-          (.*/|)NAMESPACE|m
+          (.*/|)NAMESPACE|
           (.*/|)renv/settings\.dcf|
           (.*/|)renv\.lock|
           (.*/|)pixi\.lock|
@@ -103,7 +117,7 @@ repos:
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       # File formatting and structure (fast, local)
       - id: trailing-whitespace

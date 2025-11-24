@@ -1,0 +1,56 @@
+[workspace]
+name = "synthetic-metatranscriptome-generator"
+version = "0.1.0"
+description = "A generator for synthetic metatranscriptome datasets with controlled diversity levels."
+authors = [
+    "Francisco Merino-Casallo <fmerino at cipf.es>",
+    "Verónica Llorens Rico <vllorens at cipf.es>"
+]
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[system-requirements]
+libc = { family = "glibc", version = "2.17" }
+
+[tasks]
+# Development tasks (fast, local)
+test = "Rscript tests/test_seqkit_subsampling_specs.R"
+test-all = "Rscript -e 'testthat::test_dir(\"tests/\")'"
+
+# Data generation tasks
+generate-synthetic-specs = "Rscript bin/gen_syn_specs.R --output-dir data/syn_specs"
+
+[dependencies]
+# Core system packages
+r = ">=4.4,<4.5"
+pandoc = ">=3.7.0.2,<4"
+pre-commit = ">=4.2.0,<5"
+dvc = "*"
+
+# R packages available in conda-forge
+# Development tools
+r-languageserver = ">=0.3.16,<0.4"
+r-lintr = ">=3.2.0,<4"
+r-testthat = ">=3.2.3,<4"
+
+# Analysis packages
+r-tidyverse = ">=2.0.0,<3"
+r-ggpubr = ">=0.6.0,<0.7"
+r-vegan = ">=2.7_1,<3"
+r-here = ">=1.0.1,<2"
+r-optparse = ">=1.7.5,<2"
+r-jsonlite = ">=1.8.8,<2"
+r-furrr = ">=0.3.1,<0.4"
+r-cli = ">=3.6.2,<4"
+r-png = ">=0.1_8,<0.2"
+r-future = "*"
+r-stringr = "*"
+r-spelling = ">=2.3.1,<2.3.2"
+
+# Note: r-khroma is not available in conda-forge
+# It will be installed via renv from CRAN (see docs/DEPENDENCY_MANAGEMENT.md)
+# The deprecated anaconda r channel has r-khroma 1.11.0 but requires r-base 4.3,
+# which conflicts with our r-base 4.4 requirement
+
+# System requirements
+# sysroot_linux-64 = ">=2.17,<2.28"  # Commented out to test if needed

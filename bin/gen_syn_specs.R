@@ -862,7 +862,7 @@ gen_individual_plots <- function(sims_specs, output_dir) {
     cli::cli_abort(
       c(
         "!" = "SGB mapping file not found: {mash_top_hits_file}",
-        "i" = "Run mash_top_hits_summary.R to generate this file."
+        "i" = "Run build_mash_mapping.R to generate this file."
       )
     )
   }
@@ -1038,7 +1038,7 @@ gen_community_profile_plots <- function(sims_specs_pick, output_dir) {
     cli::cli_abort(
       c(
         "!" = "SGB mapping file not found: {mash_top_hits_file}",
-        "i" = "Run mash_top_hits_summary.R to generate this file."
+        "i" = "Run build_mash_mapping.R to generate this file."
       )
     )
   }
@@ -1309,7 +1309,7 @@ gen_summary_plot <- function(sims_specs_pick, output_dir) {
     cli::cli_abort(
       c(
         "!" = "SGB mapping file not found: {mash_top_hits_file}",
-        "i" = "Run mash_top_hits_summary.R to generate this file."
+        "i" = "Run build_mash_mapping.R to generate this file."
       )
     )
   }

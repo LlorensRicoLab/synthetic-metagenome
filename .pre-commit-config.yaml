@@ -115,12 +115,28 @@ repos:
           tests/testthat/in/.*|
           )$
 
+      - id: trailing-whitespace
+        name: trailing-whitespace
+        entry: pixi run Rscript scripts/precommit_hooks/trailing-whitespace.R
+        language: system
+        pass_filenames: true
+        exclude: >
+          (?x)^(
+          data/.*\.(csv|tsv|json|fastq|gz|txt|pdf|png|jpg|jpeg)$|
+          data/.*/cache/.*|
+          data/.*/syn_specs/.*|
+          results/.*|
+          figures/.*|
+          logs/.*|
+          renv/.*|
+          pixi\.lock|
+          )$
+
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       # File formatting and structure (fast, local)
-      - id: trailing-whitespace
       - id: end-of-file-fixer
         exclude: '\.Rd' # sometimes roxygen fails to generate EOF blank line.
       - id: check-toml

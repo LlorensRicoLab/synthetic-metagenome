@@ -5,12 +5,28 @@
 # Environment configuration (contains absolute paths)
 .env
 
-# Academic thesis
+# Thesis and microTV report
 transcriptomic_pipeline_benchmarking_thesis.pdf
+microTV.pdf
 
 # IDE and editor directories
 .cursor/
 .vscode/
 
-# SLURM job logs
+# Logs
+logs/
 slurm/logs/
+
+# Large synthetic datasets
+data/datasets/
+
+# Synthetic dataset generation
+data/source_fastq/
+data/syn_specs/
+
+# Species mapping
+data/mapping/
+
+# Large databases
+data/databases/humann/*
+data/databases/metaphlan/*

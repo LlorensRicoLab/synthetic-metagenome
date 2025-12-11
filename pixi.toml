@@ -24,14 +24,19 @@ generate-synthetic-specs = "Rscript bin/gen_syn_specs.R --output-dir data/syn_sp
 # Core system packages
 r = ">=4.4,<4.5"
 pandoc = ">=3.7.0.2,<4"
-pre-commit = ">=4.2.0,<5"
+pre-commit = "4.2.0.*"
 dvc = "*"
+# System libraries needed for R package compilation (xml2, etc.)
+zlib = "*"
+xz = "*"
+libxml2 = "*"
 
 # R packages available in conda-forge
 # Development tools
 r-languageserver = ">=0.3.16,<0.4"
 r-lintr = ">=3.2.0,<4"
 r-testthat = ">=3.2.3,<4"
+r-renv = ">=1.1.5,<2"  # Dependency management for CRAN packages (e.g., khroma)
 
 # Analysis packages
 r-tidyverse = ">=2.0.0,<3"

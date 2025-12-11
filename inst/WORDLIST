@@ -48,6 +48,7 @@ jsonlite
 khroma
 languageserver
 libc
+libxml
 linter
 linters
 lintr
@@ -124,6 +125,8 @@ UniRef
 uv
 Verónica
 vllorens
+xz
 yaml
 YAML
+zlib
 ️

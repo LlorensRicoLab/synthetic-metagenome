@@ -19,10 +19,15 @@ slurm/logs/
 
 # Large synthetic datasets
 data/datasets/
+data/synthetic/datasets/
 
 # Synthetic dataset generation
 data/source_fastq/
 data/syn_specs/
+data/synthetic/generation/syn_specs/
+data/synthetic/generation/cache/
+data/synthetic/generation/abundance/
+data/synthetic/generation/source_fastq/
 
 # Species mapping
 data/mapping/
@@ -30,3 +35,7 @@ data/mapping/
 # Large databases
 data/databases/humann/*
 data/databases/metaphlan/*
+
+# Temporal backups
+data/datasets/backup/
+data/mapping_bak/

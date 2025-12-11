@@ -89,8 +89,9 @@ parse_seqkit_spec <- function(spec) {
 #' @param field 'run', 'diversity', 'simulation', 'sampling_depth', or 'pair'
 #' @return The requested field (character or integer)
 extract_from_filename <- function(
-    output_fn,
-    field = c("run", "diversity", "simulation", "sampling_depth", "pair")) {
+  output_fn,
+  field = c("run", "diversity", "simulation", "sampling_depth", "pair")
+) {
   field <- match.arg(field)
 
   # Expected format:

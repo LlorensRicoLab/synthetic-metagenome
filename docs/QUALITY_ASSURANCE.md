@@ -1,6 +1,7 @@
 # Quality Assurance Guide
 
-This project uses a **complementary approach** between pre-commit hooks and GitHub Actions CI:
+This project uses a **complementary approach** between pre-commit hooks
+  and GitHub Actions CI:
 
 ## :bookmark_tabs: Table of Contents
 
@@ -43,12 +44,14 @@ This project uses a **complementary approach** between pre-commit hooks and GitH
 Focus on syntax, formatting, and basic checks
 
 ### :building_construction: GitHub Actions CI
-- :white_check_mark: **Thorough**: Full test suite and integration tests
-- :white_check_mark: **Remote**: Runs on GitHub's infrastructure
+- :white_check_mark: **Thorough**:
+  Full test suite and integration tests
+- :white_check_mark: **Remote**:
+  Runs on GitHub's infrastructure
 - :white_check_mark: **Comprehensive**:
-Data generation, validation, and performance checks
+  Data generation, validation, and performance checks
 - :white_check_mark: **Reproducible**:
-Ensures consistent results across environments
+  Ensures consistent results across environments
 
 <div id="pre-commit-hooks"></div>
 
@@ -154,9 +157,12 @@ Code quality** job runs formatting and linting checks
 
 ### Test Strategy
 
-- **:zap: Local (pre-commit)**: Code quality, syntax, formatting
-- **:building_construction: CI (GitHub Actions)**: `test_seqkit_subsampling_specs.R`, data generation validation
-- **:building_construction: Local HPC (nightly)**: `test_dataset_validation.R` (37 min runtime)
+- **:zap: Local (pre-commit)**:
+  Code quality, syntax, formatting
+- **:building_construction: CI (GitHub Actions)**:
+  `test_seqkit_subsampling_specs.R`, data generation validation
+- **:building_construction: Local HPC (nightly)**:
+  `test_dataset_validation.R` (37 min runtime)
 
 <div id="best-practices"></div>
 

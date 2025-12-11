@@ -71,7 +71,7 @@ for format, content, and consistency with intelligent caching.
 
 **Expected Structure:**
 ```
-data/synthetic/datasets/
+data/datasets/
 ├── low_diversity/
 │   ├── individual/     # Organism-specific files
 │   └── aggregated/     # Combined simulation files
@@ -95,14 +95,16 @@ Rscript tests/test_seqkit_subsampling_specs.R
 ```
 
 **Requirements:**
-- SeqKit command files in `data/synthetic/generation/syn_specs/`
-- Input FASTQ files in `data/synthetic/generation/source_fastq/`
+- SeqKit command files in `data/syn_specs/`
+- Input FASTQ files in `data/source_fastq/`
 
 **Performance Note:**
-- **Fast execution**: Typically completes in ~26 seconds
-- **No caching needed**: Validates small text files, not large FASTQ data
-- **Lightweight**: Only checks SeqKit subsampling specifications,
-not FASTQ GZipped files
+- **Fast execution**:
+  Typically completes in ~26 seconds
+- **No caching needed**:
+  Validates small text files, not large FASTQ data
+- **Lightweight**:
+  Only checks SeqKit subsampling specifications, not FASTQ GZipped files
 
 ### :dna: Running Synthetic Dataset Validation
 
@@ -112,13 +114,13 @@ Rscript tests/test_syn_dataset_validation.R
 ```
 
 **Requirements:**
-- Generated datasets in `data/synthetic/datasets/`
+- Generated datasets in `data/datasets/`
 - Note: The first run takes approximately 3.5 minutes.
 Without intelligent caching, this would take ~37 minutes (10x slower).
 Subsequent runs take ~1m thanks to intelligent caching.
 
 **Caching System:**
-- **Cache file**: `data/synthetic/datasets/cache/syn_dataset_validation_cache.json`
+- **Cache file**: `data/cache/syn_dataset_validation_cache.json`
 - **Cached data**: Read counts, format validation results, file timestamps,
 file sizes
 - **Cache invalidation**: Based on file last modification times
@@ -209,24 +211,26 @@ The validation framework is integrated into the GitHub Actions CI pipeline:
 
 - name: Generate test data
   run: |
-    cd data/synthetic/generation
-    pixi shell -- Rscript gen_syn_specs.R --no-plots --output-dir test_output_ci
+    pixi shell -- Rscript bin/gen_syn_specs.R --no-plots --output-dir test_output_ci
 ```
 
-**Note:** Comprehensive synthetic dataset validation tests are excluded from CI
-due to 3.5-minute runtime (first run only - subsequent runs take ~1m).
+**:information_source: Note**:
+Comprehensive synthetic dataset validation tests are excluded from CI
+    due to 3.5-minute runtime (first run only - subsequent runs take ~1m).
 
-**Why not in CI?** These tests require access to DVC-tracked FASTQ GZipped files
-that are not present in the git repository.
+**:information_source: Why not in CI?**:
+These tests require access to DVC-tracked FASTQ GZipped files
+  that are not present in the git repository.
 Including them would require:
 - Setting up secure DVC remote access in GitHub Actions
 - Handling large file transfers (could hit GitHub Actions limits)
 - Significantly increasing CI runtime
 - Adding complexity for minimal benefit
 
-**Current Strategy:** Keep CI fast and focused on code quality,
-while running comprehensive dataset validation locally
-or on HPC where the datasets are available.
+**Current Strategy:**
+Keep CI fast and focused on code quality,
+  while running comprehensive dataset validation locally
+  or on HPC where the datasets are available.
 
 <div id="usage-examples"></div>
 
@@ -279,7 +283,7 @@ test_that("SeqKit files have correct structure", {
   # If validation fails, you'll see:
   # Error: File not found: seqkit_subsampling_specs_1e+04.txt
   # These files are managed by DVC.
-  # Run 'dvc pull data/synthetic/generation/syn_specs.dvc'
+  # Run 'dvc pull data/syn_specs.dvc'
   # to download them before running these tests.
 })
 ```
@@ -288,26 +292,35 @@ test_that("SeqKit files have correct structure", {
 
 ## :zap: Performance Considerations
 
-- **SeqKit validation**: Fast (~26 seconds total)
-- **Synthetic dataset validation**: Comprehensive with intelligent caching
-  - **First run**: ~3.5 minutes (creates cache)
-  - **Normal operation**: ~1 minute (uses validated cached results)
+- **SeqKit validation**:
+  Fast (~26 seconds total)
+- **Synthetic dataset validation**:
+  Comprehensive with intelligent caching
+  - **First run**:
+    ~3.5 minutes (creates cache)
+  - **Normal operation**:
+    ~1 minute (uses validated cached results)
   - **Partial cache updates**:
-  ~1-3 minutes (updates cache with new and modified files)
-  - **Complete cache regeneration**: ~3.5 minutes (when needed)
-  - **Without caching**: ~37 minutes (10x slower)
-- **Large file handling**: Uses sampling for files > 1MB
-- **Parallel processing**: Uses `mclapply` for FASTQ validation
+    ~1-3 minutes (updates cache with new and modified files)
+  - **Complete cache regeneration**:
+    ~3.5 minutes (when needed)
+  - **Without caching**:
+    ~37 minutes (10x slower)
+- **Large file handling**:
+  Uses sampling for files > 1MB
+- **Parallel processing**:
+  Uses `mclapply` for FASTQ validation
 
 ### :gear: Cache Behavior
 
 The validation framework uses an optimized caching strategy:
 
 - **Files modified but already in cache**:
-Don't trigger complete cache regeneration
+  Don't trigger complete cache regeneration
 - **Missing cached files on disk**:
-Require user manual intervention (clear error messages)
-- **Partial validation**: Only re-validates changed files for faster updates
+  Require user manual intervention (clear error messages)
+- **Partial validation**:
+  Only re-validates changed files for faster updates
 
 <div id="troubleshooting"></div>
 
@@ -320,25 +333,32 @@ Require user manual intervention (clear error messages)
 - **Missing SeqKit Subsampling Specification files**
    ```bash
    # Download from DVC
-   dvc pull data/synthetic/generation/syn_specs.dvc
+   dvc pull data/syn_specs.dvc
    ```
 
 - **Missing datasets**
    ```bash
    # Download from DVC (if available)
-   dvc pull data/synthetic/datasets.dvc
+   dvc pull data/datasets.dvc
 
    # If datasets don't exist, generate them (takes time)
-   cd data/synthetic/generation
-   Rscript gen_syn_specs.R --output-dir=syn_specs/
-   ./slurm/jobs/submit_seqkit_jobs.sh
-   ./scripts/gen_agg_syn_datasets.sh
+   Rscript bin/gen_syn_specs.R --output-dir=data/syn_specs/
+   sbatch slurm/jobs/submit_gen_syn_samples.sh
+
+   # Note: The SLURM script automatically queues an aggregation job
+   # that depends on all seqkit jobs completing.
+   # You only need to run aggregation manually if:
+   # - The aggregation job submission failed (check SLURM logs)
+   # - You're running in TEST_MODE
+   # - The automatic aggregation job didn't run successfully
+   # In those cases, run:
+   # bash tools/gen_agg_syn_datasets.sh
    ```
 
 - **Permission issues**
    ```bash
    # Check file permissions
-   ls -la data/synthetic/datasets/
+   ls -la data/datasets/
    ```
 
 <div id="debug-mode"></div>
@@ -362,5 +382,5 @@ options(testthat.output_file = "validation_debug.log")
   - Implement plugin system for new validation schemas
 
 [^1]: Note that the number of simulations per diversity level can be changed
-using the `--sims-per-diversity` argument in [gen_syn_specs.R](../data/synthetic/generation/gen_syn_specs.R).
-[^2]: Note that this range can be changed in [gen_syn_specs.R](../data/synthetic/generation/gen_syn_specs.R).
+using the `--sims-per-diversity` argument in [gen_syn_specs.R](../bin/gen_syn_specs.R).
+[^2]: Note that this range can be changed in [gen_syn_specs.R](../bin/gen_syn_specs.R).

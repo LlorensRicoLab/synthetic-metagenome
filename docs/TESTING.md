@@ -1,6 +1,7 @@
 # Testing Setup for Pipeline Benchmarking
 
-This directory contains automated tests to ensure the quality and consistency of the pipeline benchmarking project.
+This directory contains automated tests to ensure the quality
+  and consistency of the pipeline benchmarking project.
 
 **:memo: For comprehensive validation framework documentation, see [`docs/DATA_VALIDATION.md`](../docs/DATA_VALIDATION.md)**
 
@@ -33,43 +34,56 @@ This directory contains automated tests to ensure the quality and consistency of
 
 The testing infrastructure includes:
 
-1. **SeqKit Subsampling Specification Consistency Tests** - Ensures that
-SeqKit subsampling specification files maintain their expected structure
-and content
-2. **Pre-commit Hooks** - Automatic checks that run before each commit
-3. **CI/CD Pipeline** - GitHub Actions workflow for continuous integration
+1. **SeqKit Subsampling Specification Consistency Tests**:
+  Ensures that SeqKit subsampling specification files
+    maintain their expected structure and content
+2. **Pre-commit Hooks**:
+  Automatic checks that run before each commit
+3. **CI/CD Pipeline**:
+  GitHub Actions workflow for continuous integration
 
 <div id="pre-commit-hooks-and-code-quality"></div>
 
 ## :zap: Pre-commit Hooks and Code Quality
 
 This project uses comprehensive pre-commit hooks to ensure code quality
-and consistency:
+  and consistency:
 
 <div id="r-specific-hooks"></div>
 
 ### :robot: R-Specific Hooks
 
-- **style-files**: Automatic R code formatting using styler with tidyverse style
-- **parsable-R**: Ensures R code is syntactically correct
-- **lintr**: R code linting with project-specific rules
-(see `.lintr` configuration)
-- **no-browser-statement**: Prevents `browser()` statements in production code
-- **no-debug-statement**: Prevents `debug()` statements in production code
-- **spell-check**: Intelligent spell checking with comprehensive exclusions
-for technical terms
+- **style-files**:
+  Automatic R code formatting using styler with tidyverse style
+- **parsable-R**:
+  Ensures R code is syntactically correct
+- **lintr**:
+  R code linting with project-specific rules (see `.lintr` configuration)
+- **no-browser-statement**:
+  Prevents `browser()` statements in production code
+- **no-debug-statement**:
+  Prevents `debug()` statements in production code
+- **spell-check**:
+  Intelligent spell checking with comprehensive exclusions for technical terms
 
 <div id="general-file-quality-hooks"></div>
 
 ### :file_folder: General File Quality Hooks
 
-- **trailing-whitespace**: Removes trailing whitespace
-- **end-of-file-fixer**: Ensures files end with newline
-- **check-toml**: Validates TOML file syntax
-- **check-yaml**: Validates YAML file syntax
-- **check-added-large-files**: Prevents committing files larger than 1MB
-- **check-merge-conflict**: Prevents committing files with merge conflict markers
-- **check-case-conflict**: Prevents case-only filename conflicts
+- **trailing-whitespace**:
+  Removes trailing whitespace
+- **end-of-file-fixer**:
+  Ensures files end with newline
+- **check-toml**:
+  Validates TOML file syntax
+- **check-yaml**:
+  Validates YAML file syntax
+- **check-added-large-files**:
+  Prevents committing files larger than 1MB
+- **check-merge-conflict**:
+  Prevents committing files with merge conflict markers
+- **check-case-conflict**:
+  Prevents case-only filename conflicts
 
 <div id="local-custom-hooks"></div>
 
@@ -77,18 +91,18 @@ for technical terms
 
 - **test-seqkit-consistency**:
 Runs SeqKit subsampling specification consistency tests
-when relevant files are modified
+  when relevant files are modified
 
 <div id="design-philosophy"></div>
 
 ### :bulb: Design Philosophy
 
 **:zap: Pre-commit hooks are intentionally kept fast**
-to encourage frequent commits and maintain developer productivity.
+  to encourage frequent commits and maintain developer productivity.
 
 **:test_tube: Comprehensive tests**
-(including SeqKit subsampling specification consistency tests)
-are run only in the CI/CD pipeline to avoid blocking the development workflow.
+  including SeqKit subsampling specification consistency tests
+  are run only in the CI/CD pipeline to avoid blocking the development workflow.
 
 <div id="configuration"></div>
 
@@ -96,10 +110,13 @@ are run only in the CI/CD pipeline to avoid blocking the development workflow.
 
 The pre-commit configuration is in `.pre-commit-config.yaml` and includes:
 
-- **Exclusions**: Properly configured to exclude test data, generated files,
-and technical documents
-- **Hook Order**: Optimized execution order for efficiency
-- **Fail Fast**: Disabled to show all issues at once
+- **Exclusions**:
+  Properly configured to exclude test data, generated files,
+    and technical documents
+- **Hook Order**:
+  Optimized execution order for efficiency
+- **Fail Fast**:
+  Disabled to show all issues at once
 
 <div id="test-files"></div>
 
@@ -108,23 +125,25 @@ and technical documents
 ### `test_seqkit_subsampling_specs.R`
 
 This is the main test file that verifies the consistency
-of SeqKit subsampling specification files generated
-by the synthetic dataset generation script.
+  of SeqKit subsampling specification files generated
+  by the synthetic dataset generation script.
 
 **What it tests:**
 
 - **File Existence**:
-Ensures all expected SeqKit subsampling specification files exist
+  Ensures all expected SeqKit subsampling specification files exist
 - **File Structure**:
-Validates the format of each subsampling specification line
-- **Read Count Consistency**: Verifies that read counts match expected values
+  Validates the format of each subsampling specification line
+- **Read Count Consistency**:
+  Verifies that read counts match expected values
 - **Diversity Level Distribution**:
-Checks that diversity levels (low, mid, high) are correctly distributed
-- **Paired Read Consistency**: Ensures paired reads are properly matched
-- **Seed Format Validation**: Ensures seeds are valid integers
-(but doesn't test specific values)
+  Checks that diversity levels (low, mid, high) are correctly distributed
+- **Paired Read Consistency**:
+  Ensures paired reads are properly matched
+- **Seed Format Validation**:
+  Ensures seeds are valid integers (but doesn't test specific values)
 - **Deterministic Output**:
-Ensures the generation script produces consistent results
+  Ensures the generation script produces consistent results
 
 **Expected Files:**
 - `data/syn_specs/seqkit_subsampling_specs_1e+04.txt` (10,000 reads)
@@ -134,39 +153,41 @@ Ensures the generation script produces consistent results
 
 ### `test_syn_dataset_validation.R`
 
-This test file validates synthetic dataset integrity, format, and content
-with intelligent caching for performance optimization.
+This test file validates synthetic dataset integrity, format,
+  and content with intelligent caching for performance optimization.
 It validates both individual organism-specific FASTQ GZipped files
-and aggregated synthetic datasets.
+  and aggregated synthetic datasets.
 
 **What it tests:**
 
-- **File Integrity**: Validates file existence, size, and gzip integrity
+- **File Integrity**:
+  Validates file existence, size, and gzip integrity
 - **FASTQ Format Compliance**:
-Ensures files follow proper FASTQ format structure
+  Ensures files follow proper FASTQ format structure
 - **Paired-end Consistency**:
-Verifies forward and reverse reads are properly matched
+  Verifies forward and reverse reads are properly matched
 - **Read Count Accuracy**:
-Validates that aggregated files contain exactly the expected number of reads
-- **Dataset Structure**: Checks filename patterns and metadata consistency
+  Validates that aggregated files contain exactly the expected number of reads
+- **Dataset Structure**:
+  Checks filename patterns and metadata consistency
 
 **Key Features:**
 
 - **:zap: Intelligent Caching**:
-Stores validation results in `syn_dataset_validation_cache.json` for performance
+  Stores validation results in `syn_dataset_validation_cache.json` for performance
 - **:computer: Parallel Processing**:
-Uses `mclapply` for efficient validation of large datasets
+  Uses `mclapply` for efficient validation of large datasets
 - **:mag: Comprehensive Validation**:
-Tests both individual organism files and aggregated simulation files
+  Tests both individual organism files and aggregated simulation files
 - **:warning: Graceful Handling**:
-Skips tests when datasets are not available with clear error messages
+  Skips tests when datasets are not available with clear error messages
 
 **Expected Directory Structure:**
 ```
-data/synthetic/datasets/
+data/datasets/
 ├── low_diversity/
-│   ├── individual/     # Organism-specific FASTQ files
-│   └── aggregated/     # Simulation-aggregated FASTQ files
+│   ├── individual/                         # Organism-specific FASTQ files
+│   └── aggregated/                         # Simulation-aggregated FASTQ files
 ├── mid_diversity/
 │   ├── individual/
 │   └── aggregated/
@@ -174,7 +195,7 @@ data/synthetic/datasets/
 │   ├── individual/
 │   └── aggregated/
 └── cache/
-    └── syn_dataset_validation_cache.json  # Cached validation results
+    └── syn_dataset_validation_cache.json   # Cached validation results
 ```
 
 **Performance:**
@@ -283,17 +304,20 @@ graph LR
 
 The tests expect the following configuration:
 
-- **Read Counts**: 10,000, 100,000, 1,000,000, 10,000,000
-- **Diversity Levels**: low, mid, high
-- **Simulations per Level**: 5 simulations per diversity level
+- **Read Counts**:
+  10,000, 100,000, 1,000,000, 10,000,000
+- **Diversity Levels**:
+  low, mid, high
+- **Simulations per Level**:
+  5 simulations per diversity level
 - **Total Subsampling Specifications**:
-120 specifications per file
-(4 read depths × 3 levels × 5 simulations × 2 paired reads)
+  120 specifications per file
+    (4 read depths × 3 levels × 5 simulations × 2 paired reads)
 
 ### :memo: File Format
 
 Each line in the SeqKit subsampling specification files
-should follow this format:
+  should follow this format:
 
 ```
 INPUT_FILE SEED READ_COUNT OUTPUT_FILE
@@ -304,11 +328,12 @@ Example:
 ERR10785402_1.fastq.gz 134 144 mid/ERR10785402_mid_1_10000_1.fastq.gz
 ```
 
-**Note on Seeds**: The specific seed values (like `134` in the example)
-are not tested for consistency because they depend on
-the number of random number generator calls in the code.
-Any refactoring that changes the order or number of `sample()` calls
-will produce different seed values, even if the overall logic remains correct.
+:information_source: **Note on Seeds**:
+  The specific seed values (like `134` in the example)
+    are not tested for consistency because they depend on
+    the number of random number generator calls in the code.
+  Any refactoring that changes the order or number of `sample()` calls
+    will produce different seed values, even if the overall logic remains correct.
 
 <div id="adding-new-tests"></div>
 

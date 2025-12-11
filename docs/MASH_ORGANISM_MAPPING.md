@@ -1,9 +1,9 @@
 # MASH-based Organism Mapping
 
 This document describes the MASH-based approach
-for building an equivalence table between ground truth organism names
-and taxonomic identifiers from reference databases
-(e.g., [ChocoPhlAn](https://github.com/biobakery/humann?tab=readme-ov-file#download-the-chocophlan-database)).
+   for building an equivalence table between ground truth organism names
+   and taxonomic identifiers from reference databases
+   (e.g., [ChocoPhlAn](https://github.com/biobakery/humann?tab=readme-ov-file#download-the-chocophlan-database)).
 
 :book: For method details see the official [Mash docs](https://mash.readthedocs.io/en/latest/).
 
@@ -29,24 +29,25 @@ and taxonomic identifiers from reference databases
 ## :mag: Overview
 
 The MASH (Mash Screen) approach uses sequence-based containment estimation
-to map your synthetic organism genomes to any reference database.
+   to map your synthetic organism genomes to any reference database.
 This provides a more robust and accurate mapping than name-based approaches.
 
-The [ChocoPhlAn](https://github.com/biobakery/humann?tab=readme-ov-file#download-the-chocophlan-database)
-reference database works well for our purposes
-and is what we validate and ship with this toolkit.
+**This repository has been tested and validated using ChocoPhlAn SGB as distributed by HUMAnN 4.**
+However, the generator itself is **database-agnostic**
+   and works with any reference database that provides compatible input formats.
 
-You could use any other reference database,
-but expect to adapt the FASTA layout, taxonomy metadata,
-and QC expectations before reusing the helper scripts.
+You can use other reference databases (UHGG, RefSeq, etc.),
+   but you will need to adapt the FASTA layout, taxonomy metadata,
+   and QC expectations before reusing the helper scripts.
+See the [Using Other Reference Databases](#using-other-reference-databases)
+   section below for guidance.
 
 <div id="what-is-mash"></div>
 
 ## :dna: What is MASH?
 
-**MASH** (Mash Screen) is a tool
-that measures how well a genome is represented
-within a metagenome using the MinHash algorithm.
+**MASH** (Mash Screen) is a tool that measures how well a genome is represented
+   within a metagenome using the MinHash algorithm.
 It's specifically designed for:
 
 - **Containment estimation**:
@@ -75,24 +76,25 @@ It's specifically designed for:
 
 ### 1. Generate MASH Sketch from Reference Database
 Copy `env.template` to `.env`, set `CHOCOPHLAN_DB` to your ChocoPhlAn
-SGB directory, and the helper script (`tools/run_mash_pipeline.sh`)
-will automatically sketch every `*.fna*` it finds.
+   SGB directory, and the helper script (`tools/run_mash_pipeline.sh`)
+   will automatically sketch every `*.fna*` it finds.
 **No manual `mash sketch` invocation is required.**
 
 ### 2. Screen Your Organism Genomes
 Populate `data/source_fastq/` with the cleaned FASTQ files you intend to screen.
-`tools/run_mash_pipeline.sh` walks that directory, runs `mash screen` for each file,
-and writes `*_screen.tab` outputs under `data/mapping/mash_screening/`.
+   `tools/run_mash_pipeline.sh` walks that directory,
+   runs `mash screen` for each file, and writes `*_screen.tab` outputs
+   under `data/mapping/mash_screening/`.
 
 ### 3. Process Results and Create Equivalence Table
 After screening, `tools/run_mash_pipeline.sh` triggers `tools/build_mash_mapping.R`
-to combine the `*_screen.tab` files into `data/mapping/mash.tsv`,
-which feeds the downstream organism mapping.
+   to combine the `*_screen.tab` files into `data/mapping/mash.tsv`,
+   which feeds the downstream organism mapping.
 
 ### Example bash workflow
 
 Use the provided helper (`tools/run_mash_pipeline.sh`) to run the sketch →
-screen → summarize sequence in one go:
+   screen → summarize sequence in one go:
 
 ```bash
 cp env.template .env
@@ -101,10 +103,10 @@ ${EDITOR:-nano} .env   # set CHOCOPHLAN_DB to your SGB FASTA directory
 pixi run bash tools/run_mash_pipeline.sh
 ```
 
-The script sketches the ChocoPhlAn bundle, screens every FASTQ under
-`data/source_fastq/`, and finishes by calling
-`pixi run Rscript tools/build_mash_mapping.R` so the generated
-`data/mapping/mash.tsv` stays in sync with the docs above.
+The script sketches the ChocoPhlAn bundle,
+   screens every FASTQ under `data/source_fastq/`,
+   and finishes by calling `pixi run Rscript tools/build_mash_mapping.R`
+   so the generated `data/mapping/mash.tsv` stays in sync with the docs above.
 
 <div id="files-created"></div>
 
@@ -150,9 +152,10 @@ The script sketches the ChocoPhlAn bundle, screens every FASTQ under
 
 ### 1. Install MASH
 
-Mash is distributed on bioconda, so installing it through Pixi keeps the CLI
-aligned with the rest of the managed toolchain
-([package feed](https://anaconda.org/bioconda/mash)).
+Mash is distributed on bioconda, so installing it through Pixi
+   keeps the CLI aligned with the rest of the managed toolchain
+   ([package feed](https://anaconda.org/bioconda/mash)).
+
 ```bash
 # Preferred (Pixi + bioconda)
 pixi add mash -c bioconda -c conda-forge
@@ -160,16 +163,18 @@ pixi add mash -c bioconda -c conda-forge
 
 ### 2. Required Files and Directories
 - **Reference database**:
-   User-provided
-   [ChocoPhlAn](https://github.com/biobakery/humann?tab=readme-ov-file#download-the-chocophlan-database)
-   database with `.fna`/`.fna.gz` files
-- **MPA species mapping file**: `data/mapping/mpa_vOct22_CHOCOPhlAnSGB_202403_species.txt`
+   User-provided [ChocoPhlAn](https://github.com/biobakery/humann?tab=readme-ov-file#download-the-chocophlan-database)
+      database with `.fna`/`.fna.gz` files
+- **MPA species mapping file**:
+   `data/mapping/mpa_vOct22_CHOCOPhlAnSGB_202403_species.txt`
   - Download from: http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/
   - Place in `data/mapping/` directory
-- **Source organism genomes**: `data/source_fastq/*.fastq.gz`
-   (directory tracked via `.gitkeep`, populate locally)
-- **MASH screening results**: `data/mapping/mash_screening/*_screen.tab`
-   (user-generated, directory ships empty)
+- **Source organism genomes**:
+   `data/source_fastq/*.fastq.gz`
+      (directory tracked via `.gitkeep`, populate locally)
+- **MASH screening results**:
+   `data/mapping/mash_screening/*_screen.tab`
+      (user-generated, directory ships empty)
 
 <div id="troubleshooting"></div>
 
@@ -220,15 +225,16 @@ pixi add mash -c bioconda -c conda-forge
 
 ## :link: Integration with Generator
 
-The MASH mapping file (`data/mapping/mash.tsv`)
-is automatically used by the generator:
+The MASH mapping file (`data/mapping/mash.tsv`) is automatically used
+   by the generator:
 
 1. **Automatic loading**:
-   The generator (`bin/gen_syn_specs.R`)
-   automatically loads `data/mapping/mash.tsv`
-   when generating community profile plots
-2. **SGB mapping**: Maps run accessions to SGB identifiers for visualization
-3. **Taxonomy integration**: Uses taxonomy information for enhanced plot labels
+   The generator (`bin/gen_syn_specs.R`) automatically loads `data/mapping/mash.tsv`
+      when generating community profile plots
+2. **SGB mapping**:
+   Maps run accessions to SGB identifiers for visualization
+3. **Taxonomy integration**:
+   Uses taxonomy information for enhanced plot labels
 
 <div id="expected-results"></div>
 
@@ -251,7 +257,68 @@ After running the MASH-based mapping:
 4. Validate results against known organism relationships
 
 This approach provides sequence-based validation of organism identities
-and enhances the synthetic dataset generation workflow!
+   and enhances the synthetic dataset generation workflow!
+
+<div id="using-other-reference-databases"></div>
+
+## :globe_with_meridians: Using Other Reference Databases
+
+While this repository has been validated with ChocoPhlAn SGB,
+   the generator is designed to work with any reference database
+   that provides compatible input formats.
+Here's what you need to know:
+
+### :white_check_mark: What Works Across Databases
+
+The core MASH workflow is database-agnostic:
+- **MASH screening**:
+   Works with any FASTA-formatted reference database
+- **Containment estimation**:
+   Database-independent sequence comparison
+- **Mapping file format**:
+   Standard TSV structure (see [`docs/INPUT_FILE_FORMATS.md`](INPUT_FILE_FORMATS.md))
+
+### :wrench: What Needs Adaptation
+
+When using a different reference database, you may need to adapt:
+
+1. **FASTA file structure**:
+      Ensure your reference database has compatible FASTA file naming/organization
+2. **Taxonomy metadata**:
+      Adapt taxonomy mapping files to match your database's identifier system
+3. **Abundance profiles**:
+      Ensure abundance files use identifiers compatible with your database
+4. **File paths**:
+      Update environment variables and paths in scripts
+         to point to your database location
+
+### :bulb: Example: Using UHGG
+
+To use UHGG instead of ChocoPhlAn:
+
+1. Download UHGG reference genomes
+      and organize them in a compatible FASTA structure
+2. Update `CHOCOPHLAN_DB` in `.env` to point to your UHGG directory
+3. Run MASH screening against UHGG instead of ChocoPhlAn
+4. Adapt taxonomy mappings to UHGG's identifier system
+5. Generate abundance profiles using UHGG organism identifiers
+
+### :bulb: Example: Using RefSeq
+
+Similar process applies:
+1. Download RefSeq genomes
+2. Organize in compatible structure
+3. Update paths and identifiers
+4. Run MASH screening
+5. Adapt mappings and abundance files
+
+### :book: Getting Help
+
+- See [`docs/INPUT_FILE_FORMATS.md`](INPUT_FILE_FORMATS.md)
+   for format requirements
+- See [`docs/DATABASE_STORAGE.md`](DATABASE_STORAGE.md)
+   for database organization examples
+- Check existing ChocoPhlAn examples as templates for adaptation
 
 <div id="references"></div>
 

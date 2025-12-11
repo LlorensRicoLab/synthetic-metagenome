@@ -1,6 +1,8 @@
-# Pipeline Benchmarking Project
+# Synthetic Metatranscriptome Generator
 
-A comprehensive benchmarking framework for evaluating metatranscriptome analysis pipelines using synthetic datasets.
+A toolkit for generating controlled synthetic metatranscriptome datasets
+   with known organism compositions, abundances, and diversity levels.
+This generator creates realistic FASTQ files.
 
 ## :bookmark_tabs: Table of Contents
 
@@ -19,7 +21,24 @@ A comprehensive benchmarking framework for evaluating metatranscriptome analysis
 
 ## :mag: Project Overview
 
-This project aims to systematically evaluate and compare different metatranscriptome analysis pipelines (HUMAnN3, Kraken2/Bracken, SAMSA2, RealMap, VicWlad) using carefully designed synthetic datasets with varying diversity levels.
+This toolkit generates synthetic metatranscriptome datasets by:
+
+- **Controlled organism composition**:
+   Define exact organism abundances and diversity levels
+- **Realistic sequencing simulation**:
+   Uses real FASTQ reads from reference organisms
+- **Flexible configuration**:
+   Supports multiple ecological states, diversity levels, and sampling depths
+- **Database-agnostic design**:
+   Works with any reference database that provides compatible input formats
+
+**:information_source: Note**:
+   This generator has been validated using ChocoPhlAn/HUMAnN reference databases,
+      but it is designed to work with any reference database (UHGG, RefSeq, etc.)
+      that provides properly formatted abundance profiles, organism mappings,
+      and MASH screening results.
+   See the [documentation](docs/DATABASE_STORAGE.md)
+      for details on adapting to other databases.
 
 <div id="quick-start"></div>
 
@@ -33,8 +52,8 @@ This project aims to systematically evaluate and compare different metatranscrip
 
 **1. Clone the repository**:
    ```bash
-   git clone git@github.com:LlorensRicoLab/pipeline-benchmarking.git
-   cd pipeline-benchmarking
+   git clone <repository-url>
+   cd synthetic-metatranscriptome-generator
    ```
 
 **2. Set up the environment**:
@@ -139,54 +158,53 @@ Pixi handles everything automatically:
 ## :file_folder: Project Structure
 
 ```
-pipeline_benchmarking/
-├── data/                                   # Data management
-│   ├── real/                               # Real metatranscriptome datasets
-│   ├── reference/                          # Reference databases and genomes
-│   │   └── refseq/                         # RefSeq bacterial genomes
-│   └── synthetic/                          # Synthetic datasets
-│       ├── datasets/                       # Generated synthetic datasets (DVC-tracked)
-│       │   ├── high_diversity/             # High diversity communities
-│       │   ├── low_diversity/              # Low diversity communities
-│       │   └── mid_diversity/              # Medium diversity communities
-│       └── generation/                     # Synthetic data generation
-│           ├── abundance/                  # Abundance profiles
-│           ├── cache/                      # Cached read counts
-│           ├── mapping/                    # Organism mapping files
-│           ├── source_fastq/               # Source FASTQ files (DVC-tracked)
-│           └── syn_specs/                  # Generated specifications (DVC-tracked)
-├── docs/                                   # Documentation
+synthetic-metatranscriptome-generator/
+├── bin/                                     # Main generation scripts
+│   └── gen_syn_specs.R                      # Core synthetic spec generator
+├── lib/                                     # Shared libraries
+│   ├── R/                                   # R utility functions
+│   │   └── verbosity.R                      # Logging utilities
+│   └── sh/                                  # Shell utility functions
+│       └── logging.sh                       # Shell logging utilities
+├── tools/                                   # Helper tools
+│   ├── build_mash_mapping.R                 # Build MASH organism mapping
+│   ├── gen_agg_syn_datasets.sh              # Aggregate synthetic datasets
+│   ├── gen_syn_samples.sh                   # Generate synthetic samples
+│   ├── run_mash_pipeline.sh                 # Run MASH screening pipeline
+│   ├── subsample_large_fastq.sh             # Subsample large FASTQ files
+│   └── verify_aggregated_read_counts.sh     # Verify read counts
+├── scripts/                                 # Additional scripts
+│   ├── gen_agg_syn_datasets.sh              # Aggregate synthetic datasets
+│   ├── subsample_large_fastq.sh             # Subsample large FASTQ files
+│   └── verify_aggregated_read_counts.sh     # Verify read counts
+├── data/                                    # Data directories
+│   ├── abundance/                           # Abundance profile files
+│   ├── cache/                               # Cached read counts (.gitkeep)
+│   ├── databases/                           # Reference databases (.gitkeep)
+│   ├── datasets/                            # Generated datasets (.gitkeep)
+│   ├── mapping/                             # Organism mapping files
+│   │   └── mash_screening/                  # MASH screening results (.gitkeep)
+│   ├── source_fastq/                        # Source FASTQ files (.gitkeep)
+│   └── syn_specs/                           # Generation specifications (.gitkeep)
+├── docs/                                    # Documentation
+│   ├── DATABASE_STORAGE.md                  # Database storage guide
+│   ├── DATA_VALIDATION.md                   # Data validation framework
+│   ├── ENVIRONMENT_SYNC.md                  # Environment management
+│   ├── INPUT_FILE_FORMATS.md                # Input file format specifications
+│   ├── MASH_ORGANISM_MAPPING.md             # MASH-based organism mapping
 │   ├── QUALITY_ASSURANCE.md                 # Quality assurance framework
-│   ├── DATA_VALIDATION.md                  # Data validation framework
-│   ├── REFACTORING_SUMMARY.md              # Technical refactoring details
-│   ├── SYNTHETIC_DATA_GENERATION.md        # Synthetic data generation guide
-│   └── TESTING.md                          # Testing infrastructure and setup
-├── evaluation/                             # Evaluation and analysis
-│   ├── notebooks/                          # Jupyter notebooks for analysis
-│   ├── reports/                            # Evaluation reports
-│   └── scripts/                            # Evaluation scripts
-├── figures/                                # Generated figures and plots
-├── logs/                                   # Application logs
-├── pipelines/                              # Pipeline implementations
-│   └── humann3/                            # HUMAnN3 pipeline
-│       ├── config/                         # Pipeline configuration
-│       ├── scripts/                        # Pipeline scripts
-│       └── utils/                          # Utility functions
-├── results/                                # Results and outputs
-│   ├── evaluations/                        # Evaluation results
-│   └── logs/                               # Pipeline execution logs
-├── scripts/                                # Utility scripts
-│   ├── gen_agg_syn_datasets.sh             # Generate aggregated datasets
-│   ├── subsample_large_fastq.sh            # Subsample large FASTQ files
-│   └── verify_aggregated_read_counts.sh    # Verify read counts
-├── slurm/                                  # HPC job management
-│   ├── config/                             # SLURM configuration
-│   ├── jobs/                               # Job submission scripts
-│   ├── logs/                               # SLURM job logs
-│   └── utils/                              # SLURM utilities
-└── tests/                                  # Test suite
-    ├── test_seqkit_subsampling_specs.R     # SeqKit specs validation
-    └── test_syn_dataset_validation.R       # Dataset validation
+│   ├── REFACTORING_SUMMARY.md               # Technical refactoring details
+│   ├── SYNTHETIC_DATA_GENERATION.md         # Synthetic data generation guide
+│   └── TESTING.md                           # Testing infrastructure
+├── slurm/                                   # HPC job management
+│   └── jobs/                                # SLURM job scripts
+│       └── submit_gen_syn_samples.sh        # Submit generation jobs
+├── inst/                                    # Package installation files
+│   └── WORDLIST                             # Spell checking wordlist
+├── tests/                                   # Test suite
+│   ├── test_seqkit_subsampling_specs.R      # SeqKit specs validation
+│   └── test_syn_dataset_validation.R        # Dataset validation
+└── renv/                                    # R environment management
 ```
 
 <div id="usage"></div>
@@ -195,22 +213,39 @@ pipeline_benchmarking/
 
 ### :dna: Synthetic Data Generation
 
-Generate synthetic datasets using the original R scripts:
+Generate synthetic datasets using the main generator script:
 
 ```bash
 # Activate the environment
 pixi shell
 
-# Navigate to generation directory
-cd data/synthetic/generation
+# Run the generator (generates all diversity levels)
+pixi run Rscript bin/gen_syn_specs.R
 
-# Run the simulation script (generates all diversity levels)
-Rscript gen_syn_specs.R
+# Or with custom options
+pixi run Rscript bin/gen_syn_specs.R --help
 ```
 
-**Note**: The script supports command-line arguments for customization.
+**:information_source: Note**:
+   The script supports command-line arguments for customization.
 See [`docs/SYNTHETIC_DATA_GENERATION.md`](docs/SYNTHETIC_DATA_GENERATION.md)
-for detailed usage options.
+   for detailed usage options.
+
+### :dna: MASH Organism Mapping
+
+Before generating synthetic datasets, you may need to create organism mappings
+   using MASH screening:
+
+```bash
+# Set up environment file
+cp env.template .env
+# Edit .env to set CHOCOPHLAN_DB (or your reference database path)
+
+# Run MASH pipeline
+pixi run bash tools/run_mash_pipeline.sh
+```
+
+See [`docs/MASH_ORGANISM_MAPPING.md`](docs/MASH_ORGANISM_MAPPING.md) for details.
 
 ### :test_tube: Testing
 
@@ -223,10 +258,10 @@ This project includes comprehensive testing and code quality infrastructure:
 pixi shell
 
 # Generate synthetic datasets first (required for tests)
-Rscript data/synthetic/generation/gen_syn_specs.R --no-plots
+pixi run Rscript bin/gen_syn_specs.R --no-plots
 
 # Run SeqKit subsampling specification tests
-Rscript tests/test_seqkit_subsampling_specs.R
+pixi run Rscript tests/test_seqkit_subsampling_specs.R
 
 # Run all code quality checks
 pre-commit run --all-files
@@ -234,11 +269,12 @@ pre-commit run --all-files
 
 #### Testing Infrastructure
 
-- **Automated Testing**: Pre-commit hooks run automatically before each commit
+- **Automated Testing**:
+   Pre-commit hooks run automatically before each commit
 - **CI/CD Pipeline**:
-GitHub Actions validates code quality on every push and pull request
+   GitHub Actions validates code quality on every push and pull request
 - **Custom Tests**:
-SeqKit subsampling specification validation ensures data generation reliability
+   SeqKit subsampling specification validation ensures data generation reliability
 
 **:book: For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md)**
 
@@ -248,7 +284,8 @@ SeqKit subsampling specification validation ensures data generation reliability
 
 ### :building_construction: Setting Up Development Environment
 
-If you plan to contribute to this project, you'll need to set up additional development tools:
+If you plan to contribute to this project,
+   you'll need to set up additional development tools:
 
 ```bash
 # Activate the environment
@@ -268,13 +305,19 @@ This project uses comprehensive code quality tools and testing infrastructure:
 
 **:book: For detailed development setup and testing documentation, see [docs/TESTING.md](docs/TESTING.md)**
 
-### :heavy_plus_sign: Adding New Pipelines
+### :heavy_plus_sign: Using Other Reference Databases
 
-1. Create a new directory in `pipelines/`
-2. Add configuration files in `config/`
-3. Create execution scripts in `scripts/`
-4. Add utility functions in `utils/`
-5. Update evaluation scripts to include the new pipeline
+This generator has been validated with ChocoPhlAn/HUMAnN,
+   but can work with other reference databases (UHGG, RefSeq, etc.).
+To adapt:
+
+1. Prepare abundance profiles in the format described in [`docs/INPUT_FILE_FORMATS.md`](docs/INPUT_FILE_FORMATS.md)
+2. Create organism mapping files compatible with your reference database
+3. Run MASH screening against your reference database (see [`docs/MASH_ORGANISM_MAPPING.md`](docs/MASH_ORGANISM_MAPPING.md))
+4. Adapt file paths and taxonomy mappings as needed
+
+See the [documentation](docs/DATABASE_STORAGE.md)
+   for details on database-agnostic usage.
 
 ### :handshake: Contributing
 
@@ -325,8 +368,7 @@ This project uses comprehensive code quality tools and testing infrastructure:
 
 ### :sos: Getting Help
 
-- Check the logs in `results/logs/`
-- Review pipeline-specific documentation
+- Check the documentation in `docs/`
 - Open an issue on GitHub with detailed error information
 
 <div id="license"></div>
@@ -346,13 +388,14 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## :memo: Citation
 
-If you use this benchmarking framework in your research, please cite:
+If you use this synthetic metatranscriptome generator in your research,
+   please cite:
 
 ```bibtex
-@software{pipeline_benchmarking,
-  title={Pipeline Benchmarking: A Framework for Metatranscriptome Analysis},
+@software{synthetic_metatranscriptome_generator,
+  title={Synthetic Metatranscriptome Generator: A Toolkit for Controlled Dataset Generation},
   author={Merino-Casallo, Francisco and Llorens Rico, Verónica},
   year={2025},
-  url={https://github.com/LlorensRicoLab/pipeline-benchmarking}
+  url={https://github.com/LlorensRicoLab/synthetic-metatranscriptome-generator}
 }
 ```

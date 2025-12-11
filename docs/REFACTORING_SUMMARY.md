@@ -18,7 +18,10 @@
 
 ## :mag: Overview
 
-This document summarizes the comprehensive refactoring of the synthetic dataset generation script, transforming it from a monolithic structure to a well-organized, maintainable, and high-performance R script.
+This document summarizes the comprehensive refactoring
+    of the synthetic dataset generation script,
+    transforming it from a monolithic structure to a well-organized,
+    maintainable, and high-performance R script.
 
 <div id="file-history"></div>
 
@@ -33,9 +36,13 @@ This document summarizes the comprehensive refactoring of the synthetic dataset 
 ## :rocket: Performance Improvements
 
 ### Execution Time
-- **Original Script**: ~3:10-3:16 minutes (190-196 seconds)
-- **Refactored Script**: ~45-49 seconds
-- **Improvement**: **:zap: 4x faster** (:chart_with_downwards_trend: 75% reduction in execution time)
+- **Original Script**:
+    ~3:10-3:16 minutes (190-196 seconds)
+- **Refactored Script**:
+    ~45-49 seconds
+- **Improvement**:
+    **:zap: 4x faster**
+    (:chart_with_downwards_trend: 75% reduction in execution time)
 
 ### Memory Usage
 - **Original Script**: ~766-855 MB
@@ -92,24 +99,36 @@ log_valid_sims_breakdown()
 - No data integrity checks
 
 #### :white_check_mark: After: Robust Error Handling
-- **FASTQ File Validation**: Ensures both forward and reverse files exist with identical read counts
-- **Data Integrity Checks**: Validates organism mapping, abundance files, and simulation data
-- **Descriptive Error Messages**: Clear, actionable error messages with context
-- **Graceful Degradation**: Handles edge cases without crashing
+- **FASTQ File Validation**:
+    Ensures both forward and reverse files exist with identical read counts
+- **Data Integrity Checks**:
+    Validates organism mapping, abundance files, and simulation data
+- **Descriptive Error Messages**:
+    Clear, actionable error messages with context
+- **Graceful Degradation**:
+    Handles edge cases without crashing
 
 ### 3. Intelligent Caching System
 
 #### :x: Before: No Read Count Validation
-- **No read availability checks** - Script didn't validate we had enough reads for each organism
-- **No caching system** - Every run processed all data from scratch
-- **No file monitoring** - No tracking of FASTQ file modifications
+- **No read availability checks**:
+    Script didn't validate we had enough reads for each organism
+- **No caching system**:
+    Every run processed all data from scratch
+- **No file monitoring**:
+    No tracking of FASTQ file modifications
 
 #### :white_check_mark: After: Smart Caching & Validation
-- **Read Availability Validation**: Ensures we have enough reads for each organism
-- **File Timestamp Tracking**: Monitors both forward and reverse FASTQ file modifications
-- **JSON Cache Storage**: Persistent cache with file modification timestamps
-- **Incremental Updates**: Only recalculates for changed files
-- **Performance Boost**: Dramatically faster subsequent runs
+- **Read Availability Validation**:
+    Ensures we have enough reads for each organism
+- **File Timestamp Tracking**:
+    Monitors both forward and reverse FASTQ file modifications
+- **JSON Cache Storage**:
+    Persistent cache with file modification timestamps
+- **Incremental Updates**:
+    Only recalculates for changed files
+- **Performance Boost**:
+    Dramatically faster subsequent runs
 
 ### 4. Parallel Processing
 
@@ -119,10 +138,14 @@ log_valid_sims_breakdown()
 - Suboptimal resource utilization
 
 #### :white_check_mark: After: Optimized Parallelization
-- **Future/Furrr Integration**: Parallel processing for I/O-intensive operations
-- **Worker Optimization**: 8 workers found optimal for the system
-- **Parallel Plot Generation**: Individual plots generated in parallel
-- **Efficient Resource Usage**: Better CPU and memory utilization
+- **Future/Furrr Integration**:
+    Parallel processing for I/O-intensive operations
+- **Worker Optimization**:
+    Found 8 workers to be optimal for the system
+- **Parallel Plot Generation**:
+    Individual plots generated in parallel
+- **Efficient Resource Usage**:
+    Better CPU and memory utilization
 
 ### 5. Clean Code Principles
 
@@ -133,10 +156,15 @@ log_valid_sims_breakdown()
 - No documentation or comments
 
 #### :white_check_mark: After: Clean Code Implementation
-- **Constants**: All magic numbers replaced with named constants (SAMPLING_DEPTHS, RND_SEED_RANGE)
-- **Descriptive Names**: Clear, purpose-revealing function and variable names
-- **Single Responsibility**: Each function has one clear purpose
-- **Comprehensive Documentation**: Roxygen comments for all functions with @title, @description, @param, @return
+- **Constants**:
+    All magic numbers replaced with named constants
+        (SAMPLING_DEPTHS, RND_SEED_RANGE)
+- **Descriptive Names**:
+    Clear, purpose-revealing function and variable names
+- **Single Responsibility**:
+    Each function has one clear purpose
+- **Comprehensive Documentation**:
+    Roxygen comments for all functions with @title, @description, @param, @return
 
 ### 6. CLI Interface
 
@@ -164,10 +192,14 @@ log_valid_sims_breakdown()
 - Minimal information provided to the user
 
 #### :white_check_mark: After: Structured Logging
-- **Timestamped Messages**: `[HH:MM:SS]` format for all log messages
-- **Phase-based Progress**: Clear indication of current processing phase (1/6, 2/6, etc.)
-- **Timing Information**: Detailed timing for each phase with summary
-- **Summary Reports**: Comprehensive final summary with statistics and breakdowns
+- **Timestamped Messages**:
+    `[HH:MM:SS]` format for all log messages
+- **Phase-based Progress**:
+    Clear indication of current processing phase (1/6, 2/6, etc.)
+- **Timing Information**:
+    Detailed timing for each phase with summary
+- **Summary Reports**:
+    Comprehensive final summary with statistics and breakdowns
 
 ### 8. Data Integrity & Validation
 
@@ -177,11 +209,16 @@ log_valid_sims_breakdown()
 - No data consistency checks
 
 #### :white_check_mark: After: Comprehensive Validation
-- **Paired-end FASTQ Validation**: Ensures both forward and reverse files exist with identical read counts
-- **Read Availability Validation**: Checks if we have enough reads for each organism
-- **Organism Mapping Validation**: Validates organism data integrity and structure
-- **Abundance File Validation**: Checks abundance data structure and content validity
-- **Simulation Data Validation**: Ensures simulation specifications meet diversity and sampling requirements
+- **Paired-end FASTQ Validation**:
+    Ensures both forward and reverse files exist with identical read counts
+- **Read Availability Validation**:
+    Checks if we have enough reads for each organism
+- **Organism Mapping Validation**:
+    Validates organism data integrity and structure
+- **Abundance File Validation**:
+    Checks abundance data structure and content validity
+- **Simulation Data Validation**:
+    Ensures simulation specifications meet diversity and sampling requirements
 
 <div id="function-extractions-improvements"></div>
 
@@ -220,10 +257,14 @@ timing_data$data_loading <- elapsed_time
 - `count_*` - Counting functions (count_valid_sims_per_combination)
 
 ### Enhanced Naming Conventions
-- **Descriptive Function Names**: Clear, purpose-revealing names (e.g., `gen_sim_specs`, `filter_valid_sims`)
-- **Standardized Abbreviations**: Consistent prefixes (`gen_*`, `calc_*`, `log_*`, `count_*`)
-- **Context-Aware Variables**: Simplified names where context is clear (e.g., `data_loading` in timing_data list)
-- **Professional Terminology**: Industry-standard naming conventions
+- **Descriptive Function Names**:
+    Clear, purpose-revealing names (e.g., `gen_sim_specs`, `filter_valid_sims`)
+- **Standardized Abbreviations**:
+    Consistent prefixes (`gen_*`, `calc_*`, `log_*`, `count_*`)
+- **Context-Aware Variables**:
+    Simplified names where context is clear (e.g., `data_loading` in timing_data list)
+- **Professional Terminology**:
+    Industry-standard naming conventions
 
 <div id="file-organization"></div>
 
@@ -319,14 +360,20 @@ result
 ## :test_tube: Testing & Validation
 
 ### Performance Testing
-- **Automated Benchmarking**: Script performance comparison with multiple runs
-- **Statistical Significance**: 10+ executions for reliable performance metrics
-- **Resource Monitoring**: CPU, memory, and timing tracking for optimization
+- **Automated Benchmarking**:
+    Script performance comparison with multiple runs
+- **Statistical Significance**:
+    10+ executions for reliable performance metrics
+- **Resource Monitoring**:
+    CPU, memory, and timing tracking for optimization
 
 ### Data Validation
-- **Read Count Consistency**: Ensures paired-end FASTQ file integrity and matching read counts
-- **Simulation Validity**: Validates that simulations meet diversity level requirements (low, mid, high)
-- **Output Verification**: Confirms generated data meets sampling depth and organism requirements
+- **Read Count Consistency**:
+    Ensures paired-end FASTQ file integrity and matching read counts
+- **Simulation Validity**:
+    Validates that simulations meet diversity level requirements (low, mid, high)
+- **Output Verification**:
+    Confirms generated data meets sampling depth and organism requirements
 
 <div id="future-maintenance"></div>
 
@@ -346,7 +393,12 @@ result
 
 ## :memo: Conclusion
 
-The refactoring transformed a monolithic, hard-to-maintain script into a professional, high-performance, and maintainable R application. The improvements span code quality, performance, maintainability, and user experience, making it ready for production use and future development.
+The refactoring transformed a monolithic,
+    hard-to-maintain script into a professional, high-performance,
+    and maintainable R application.
+The improvements span code quality, performance, maintainability,
+    and user experience, making it ready for production use
+    and future development.
 
 ### Key Achievements
 - :white_check_mark: **:zap: 4x performance improvement**
@@ -359,4 +411,5 @@ The refactoring transformed a monolithic, hard-to-maintain script into a profess
 - :white_check_mark: **:dart: Professional CLI interface**
 - :white_check_mark: **:bar_chart: Structured logging system**
 
-This refactoring serves as a model for transforming legacy R scripts into modern, production-ready applications.
+This refactoring serves as a model for transforming legacy R scripts
+    into modern production-ready applications.

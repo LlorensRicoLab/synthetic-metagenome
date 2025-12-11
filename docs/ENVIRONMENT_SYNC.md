@@ -1,8 +1,22 @@
 # Pixi + renv Coexistence Guide
 
-## :question: Why we run both managers
+This document describes how Pixi and renv work together
+    to manage R package dependencies in this project.
 
-This approach follows best practices for using R within Conda-based environments (see [References](#references) below).
+## :bookmark_tabs: Table of Contents
+
+- [:question: Why We Run Both Managers](#why-we-run-both-managers)
+- [:warning: What `project is out-of-sync` Means](#what-project-is-out-of-sync-means)
+- [:star: Recommended Workflow](#recommended-workflow)
+- [:memo: Practical Notes](#practical-notes)
+- [:book: References](#references)
+
+<div id="why-we-run-both-managers"></div>
+
+## :question: Why We Run Both Managers
+
+This approach follows best practices for using R within Conda-based environments
+    (see [References](#references) below).
 
 - [Pixi](https://pixi.sh/latest) supplies the base R 4.4 toolchain plus most [CRAN packages](https://cran.r-project.org/)
     through [conda-forge](https://conda-forge.org/).
@@ -15,7 +29,9 @@ This approach follows best practices for using R within Conda-based environments
     on top of Pixi's site library.
     Both managers therefore see each other's packages.
 
-## :warning: What `project is out-of-sync` means
+<div id="what-project-is-out-of-sync-means"></div>
+
+## :warning: What `project is out-of-sync` Means
 - renv compares the actual packages on `.libPaths()`
     against the versions recorded in `renv.lock`.
 - Pixi upgrades (or CRAN installs) make packages appear “installed”
@@ -23,7 +39,9 @@ This approach follows best practices for using R within Conda-based environments
 - The warning does **not** mean anything is broken;
     it just signals that `renv::snapshot()` or `renv::restore()` needs to run.
 
-## :star: Recommended workflow after changing dependencies
+<div id="recommended-workflow"></div>
+
+## :star: Recommended Workflow After Changing Dependencies
 1. **Install or upgrade via Pixi whenever possible**
    - Example: `pixi add r-spelling` also brings in `r-hunspell`,
         letting renv treat them as external libraries.
@@ -43,7 +61,9 @@ This approach follows best practices for using R within Conda-based environments
    pixi run Rscript -e "renv::restore()"
    ```
 
-## :memo: Practical notes
+<div id="practical-notes"></div>
+
+## :memo: Practical Notes
 - Keep `.Rprofile` in version control
     so renv always auto-activates for CRAN-only packages.
 - When the `khroma` conda-forge recipe lands,
@@ -51,6 +71,8 @@ This approach follows best practices for using R within Conda-based environments
     until then, expect `khroma` to be tracked in `renv.lock`.
 - Treat renv warnings as bookkeeping:
     resolve them before committing so teammates don't inherit noisy runs.
+
+<div id="references"></div>
 
 ## :book: References
 

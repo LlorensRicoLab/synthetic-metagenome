@@ -1,0 +1,25 @@
+# Ignore large data directories
+data/
+logs/
+*.fastq.gz
+*.fastq
+*.fq.gz
+*.fq
+
+# Ignore cache and temporary files
+cache/
+tmp/
+*.cache
+*.tmp
+
+# Ignore plots (generated files)
+plots/
+*.pdf
+*.png
+*.jpg
+
+# Ignore other generated files
+*.tsv
+*.csv
+!data/mapping/*.csv
+!data/mapping/*.tsv

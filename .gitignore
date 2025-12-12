@@ -18,24 +18,29 @@ logs/
 slurm/logs/
 
 # Large synthetic datasets
-data/datasets/
-data/synthetic/datasets/
+data/datasets/*
+!data/datasets/.gitkeep
 
 # Synthetic dataset generation
-data/source_fastq/
-data/syn_specs/
-data/synthetic/generation/syn_specs/
-data/synthetic/generation/cache/
-data/synthetic/generation/abundance/
-data/synthetic/generation/source_fastq/
+data/source_fastq/*
+!data/source_fastq/.gitkeep
+data/syn_specs/*
+!data/syn_specs/.gitkeep
+data/abundance/*
+!data/abundance/.gitkeep
 
 # Species mapping
-data/mapping/
+data/mapping/*
+!data/mapping/.gitkeep
+data/mapping/**/*
+!data/mapping/**/
+!data/mapping/**/.gitkeep
+
+# Cache
+data/cache/*
+!data/cache/.gitkeep
 
 # Large databases
-data/databases/humann/*
-data/databases/metaphlan/*
-
-# Temporal backups
-data/datasets/backup/
-data/mapping_bak/
+data/databases/*
+!data/databases/.gitkeep
+!data/databases/**/.gitkeep

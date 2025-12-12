@@ -1,7 +1,7 @@
 # :dna: Synthetic Dataset Generation
 
 This directory contains the workflow
-  for generating synthetic metatranscriptome datasets
+  for generating synthetic metagenome datasets
   with controlled diversity levels.
 
 ## :bookmark_tabs: Table of Contents

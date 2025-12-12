@@ -1,7 +1,7 @@
 [workspace]
-name = "synthetic-metatranscriptome-generator"
+name = "synthetic-metagenome"
 version = "0.1.0"
-description = "A generator for synthetic metatranscriptome datasets with controlled diversity levels."
+description = "A generator for synthetic metagenome datasets with controlled diversity levels."
 authors = [
     "Francisco Merino-Casallo <fmerino at cipf.es>",
     "Verónica Llorens Rico <vllorens at cipf.es>"

@@ -1,6 +1,6 @@
-# Synthetic Metatranscriptome Generator
+# Synthetic Metagenome Generator
 
-A toolkit for generating controlled synthetic metatranscriptome datasets
+A toolkit for generating controlled synthetic metagenome datasets
    with known organism compositions, abundances, and diversity levels.
 This generator creates realistic FASTQ files.
 
@@ -21,7 +21,7 @@ This generator creates realistic FASTQ files.
 
 ## :mag: Project Overview
 
-This toolkit generates synthetic metatranscriptome datasets by:
+This toolkit generates synthetic metagenome datasets by:
 
 - **Controlled organism composition**:
    Define exact organism abundances and diversity levels
@@ -53,7 +53,7 @@ This toolkit generates synthetic metatranscriptome datasets by:
 **1. Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd synthetic-metatranscriptome-generator
+   cd synthetic-metagenome
    ```
 
 **2. Set up the environment**:
@@ -158,7 +158,7 @@ Pixi handles everything automatically:
 ## :file_folder: Project Structure
 
 ```
-synthetic-metatranscriptome-generator/
+synthetic-metagenome/
 ├── bin/                                     # Main generation scripts
 │   └── gen_syn_specs.R                      # Core synthetic spec generator
 ├── lib/                                     # Shared libraries
@@ -388,14 +388,14 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## :memo: Citation
 
-If you use this synthetic metatranscriptome generator in your research,
+If you use this synthetic metagenome generator in your research,
    please cite:
 
 ```bibtex
-@software{synthetic_metatranscriptome_generator,
-  title={Synthetic Metatranscriptome Generator: A Toolkit for Controlled Dataset Generation},
+@software{synthetic_metagenome_generator,
+  title={Synthetic Metagenome Generator: A Toolkit for Controlled Dataset Generation},
   author={Merino-Casallo, Francisco and Llorens Rico, Verónica},
   year={2025},
-  url={https://github.com/LlorensRicoLab/synthetic-metatranscriptome-generator}
+  url={https://github.com/LlorensRicoLab/synthetic-metagenome}
 }
 ```

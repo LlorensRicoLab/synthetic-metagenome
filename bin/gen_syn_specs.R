@@ -1,14 +1,14 @@
 #!/usr/bin/env Rscript
 
-#' @title Synthetic Metatranscriptome Dataset Generator
+#' @title Synthetic Metagenome Dataset Generator
 #' @author Verónica Lloréns Rico
 #' @author Francisco Merino-Casallo
 #' @date 2025-07-31
-#' @description Generates synthetic metatranscriptome datasets
+#' @description Generates synthetic metagenome datasets
 #' with controlled diversity levels
 #'
-#' @details Creates synthetic metatranscriptomes
-#' by subsampling public RNA-seq data.
+#' @details Creates synthetic metagenomes
+#' by subsampling public sequencing data (DNA-seq or RNA-seq).
 #' Produces datasets with controlled diversity levels and sampling depths,
 #' ensuring read availability constraints are met.
 #'

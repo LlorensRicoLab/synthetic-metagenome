@@ -1,7 +1,7 @@
-# Testing Setup for Synthetic Metatranscriptome Generator
+# Testing Setup for Synthetic Metagenome Generator
 
 This directory contains automated tests to ensure the quality
-  and consistency of the synthetic metatranscriptome generator.
+  and consistency of the synthetic metagenome generator.
 
 **:memo: For comprehensive validation framework documentation, see [`DATA_VALIDATION.md`](DATA_VALIDATION.md)**
 

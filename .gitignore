@@ -44,3 +44,6 @@ data/cache/*
 data/databases/*
 !data/databases/.gitkeep
 !data/databases/**/.gitkeep
+
+# See https://github.com/tidyverse/ggplot2/issues/2787
+Rplots.pdf

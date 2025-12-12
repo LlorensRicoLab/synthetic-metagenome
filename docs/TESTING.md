@@ -1,9 +1,9 @@
-# Testing Setup for Pipeline Benchmarking
+# Testing Setup for Synthetic Metatranscriptome Generator
 
 This directory contains automated tests to ensure the quality
-  and consistency of the pipeline benchmarking project.
+  and consistency of the synthetic metatranscriptome generator.
 
-**:memo: For comprehensive validation framework documentation, see [`docs/DATA_VALIDATION.md`](../docs/DATA_VALIDATION.md)**
+**:memo: For comprehensive validation framework documentation, see [`DATA_VALIDATION.md`](DATA_VALIDATION.md)**
 
 ## :bookmark_tabs: Table of Contents
 

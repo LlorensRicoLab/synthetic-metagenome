@@ -43,7 +43,7 @@ jobs:
       run: |
         # Check for required files
         test -f README.md && echo "PASS: README.md exists"
-        test -f pyproject.toml && echo "PASS: pyproject.toml exists"
+        test -f pixi.toml && echo "PASS: pixi.toml exists"
         test -f .pre-commit-config.yaml && echo "PASS: pre-commit config exists"
 
         # Check for required directories
